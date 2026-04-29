@@ -11,7 +11,7 @@
 
 1. Abdel-Aziz B. Tebbeng
 2. Kendrick U. Serrano
-3. *(member 3)*
+3. John Erick C. Anacleto
 4. *(member 4)*
 5. *(member 5)*
 
