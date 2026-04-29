@@ -9,8 +9,8 @@
 
 ## Group members (max 5)
 
-1. Abdel-Aziz Baiting Tebbeng
-2. *(member 2)*
+1. Abdel-Aziz B. Tebbeng
+2. Kendrick U. Serrano
 3. *(member 3)*
 4. *(member 4)*
 5. *(member 5)*
