@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, hint_box %}
+{% block title %}Lesson: IDOR{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+  {{ lesson_header("user-x", "Insecure Direct Object Reference", "Access another user's data by changing the URL", completed) }}
+
+  <div class="flex flex-wrap gap-2 text-xs">
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Difficulty: Intermediate</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">~5 minutes</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Topic: Access Control</span>
+  </div>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">What is IDOR?</h2>
+    <p class="text-slate-700">
+      IDOR happens when an app exposes a direct reference to a record (a database
+      ID, a filename, a UUID) and trusts that the user only requests their own.
+      If the server doesn't check ownership, anyone who guesses or increments the
+      ID can read &mdash; or modify &mdash; someone else's data.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">Your task</h2>
+    <ol class="list-decimal list-inside space-y-1 text-slate-700">
+      <li>You're logged in as profile <strong>#1</strong> on a vulnerable endpoint.</li>
+      <li>The URL pattern is <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">/lesson/idor/profile/&lt;id&gt;</code>.</li>
+      <li>Visit a profile that isn't yours to complete the lesson.</li>
+    </ol>
+  </section>
+
+  {{ hint_box('<p>Try changing the ID at the end of the URL: <code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">/lesson/idor/profile/2</code> or <code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">/lesson/idor/profile/3</code>. The challenge page also has shortcut buttons.</p>') }}
+
+  <a href="{{ url_for('lesson_idor_challenge') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+    Start the challenge <i data-lucide="arrow-right" class="w-4 h-4"></i>
+  </a>
+
+  <section class="border-t border-slate-200 pt-6">
+    <h2 class="text-lg font-semibold text-slate-900 mb-3">How to prevent IDOR</h2>
+    <ul class="space-y-2 text-slate-700">
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> <strong>Always check ownership server-side</strong> before returning a record &mdash; never trust an ID just because the user knows it.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> <strong>Prefer indirect references</strong> &mdash; route requests through <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">/me/profile</code>, not <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">/profile/&lt;id&gt;</code>.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> <strong>Use unguessable IDs</strong> (UUIDs) when direct references are unavoidable &mdash; defense in depth, not a substitute for authorization.</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}

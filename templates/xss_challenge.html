@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, completion_banner %}
+{% block title %}XSS Challenge{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    {{ lesson_header("code-2", "Challenge: Inject a Script", "Submit an XSS payload into the greeting form", completed) }}
+  </div>
+
+  {% if just_completed %}
+    {{ completion_banner(url_for('lesson_xss_complete')) }}
+  {% endif %}
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+      <div class="bg-red-50 border-b border-red-200 px-5 py-3 flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i>
+        <h2 class="text-sm font-bold text-red-800 uppercase tracking-wider">Vulnerable greeting (renders raw HTML)</h2>
+      </div>
+      <div class="p-5 space-y-4">
+        <form method="post" class="space-y-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="xname" class="block text-sm font-medium text-slate-700">Your name</label>
+          <input id="xname" name="name" type="text" autocomplete="off" placeholder="<script>alert(1)</script>"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg mono text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+          <button class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg">Submit</button>
+        </form>
+
+        {% if payload %}
+          <div class="border-t border-slate-100 pt-3 space-y-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase">Vulnerable render (input echoed unescaped)</p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
+              Hello, {{ payload | safe }}!
+            </div>
+            {% if triggered %}
+              <p class="text-sm text-emerald-700 font-medium flex items-center gap-1">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                XSS pattern detected &mdash; in a real victim's browser this would have executed.
+              </p>
+            {% else %}
+              <p class="text-sm text-amber-700">No XSS detected. Try a payload from the hint.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 overflow-hidden">
+      <div class="bg-emerald-50 border-b border-emerald-200 px-5 py-3 flex items-center gap-2">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+        <h2 class="text-sm font-bold text-emerald-800 uppercase tracking-wider">Secure render (auto-escaped)</h2>
+      </div>
+      <div class="p-5 space-y-2">
+        <p class="text-sm text-slate-600">Same input rendered through Jinja2's default auto-escape:</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
+          Hello, {{ payload }}!
+        </div>
+        {% if payload %}
+          <p class="text-sm text-slate-700">The angle brackets and quotes are converted to <code class="mono bg-slate-100 px-1 rounded text-xs">&amp;lt;</code> / <code class="mono bg-slate-100 px-1 rounded text-xs">&amp;gt;</code> entities &mdash; the browser shows the text but does not execute anything.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <p class="text-sm">
+    <a href="{{ url_for('lesson_xss_intro') }}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to lesson intro</a>
+  </p>
+</div>
+{% endblock %}

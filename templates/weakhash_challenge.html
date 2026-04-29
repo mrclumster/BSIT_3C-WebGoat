@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, completion_banner %}
+{% block title %}Crack the Hash{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    {{ lesson_header("key-round", "Challenge: Crack the MD5", "Pick a target, then try wordlist candidates", completed) }}
+  </div>
+
+  {% if just_completed %}
+    {{ completion_banner(url_for('lesson_weakhash_complete')) }}
+  {% endif %}
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Leaked database dump</h2>
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-slate-500 border-b border-slate-200">
+          <th class="py-2">Username</th>
+          <th class="py-2">MD5 hash</th>
+          <th class="py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in leaked_users %}
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="py-2 mono">{{ u.username }}</td>
+            <td class="py-2 mono text-xs text-slate-600 break-all">{{ u.md5 }}</td>
+            <td class="py-2 text-right">
+              <form method="post" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="target_user" value="{{ u.username }}">
+                <input type="hidden" name="candidate" value="">
+                <button class="text-xs px-2 py-1 rounded border border-slate-300 hover:bg-slate-50 {% if target == u.username %}bg-brand-50 border-brand-300 text-brand-700{% endif %}">
+                  {% if target == u.username %}Selected{% else %}Target this{% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+      <div class="bg-red-50 border-b border-red-200 px-5 py-3 flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i>
+        <h2 class="text-sm font-bold text-red-800 uppercase tracking-wider">MD5 cracker (fast)</h2>
+      </div>
+      <div class="p-5 space-y-3">
+        <p class="text-sm text-slate-600">Targeting <code class="mono bg-slate-100 px-1.5 py-0.5 rounded">{{ target }}</code></p>
+        <form method="post" class="space-y-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="target_user" value="{{ target }}">
+          <input type="hidden" name="mode" value="md5">
+          <label for="cand" class="block text-sm font-medium text-slate-700">Candidate password</label>
+          <input id="cand" name="candidate" type="text" autocomplete="off" placeholder="try one from the wordlist"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg mono text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+          <button class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded-lg">Try MD5</button>
+        </form>
+        {% if md5_result %}
+          <div class="border-t border-slate-100 pt-3">
+            <p class="text-xs text-slate-500 mono">md5("{{ md5_result.candidate }}") = {{ md5_result.hash }}</p>
+            {% if md5_result.matched %}
+              <p class="text-sm text-emerald-700 font-medium mt-1">&#10003; Match! Password is <code class="mono bg-emerald-50 px-1.5 py-0.5 rounded">{{ md5_result.candidate }}</code></p>
+            {% else %}
+              <p class="text-sm text-amber-700 mt-1">No match. Try another.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-emerald-200 overflow-hidden">
+      <div class="bg-emerald-50 border-b border-emerald-200 px-5 py-3 flex items-center gap-2">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+        <h2 class="text-sm font-bold text-emerald-800 uppercase tracking-wider">bcrypt verifier (slow)</h2>
+      </div>
+      <div class="p-5 space-y-3">
+        <p class="text-sm text-slate-600">Same password, stored with bcrypt:</p>
+        <pre class="bg-slate-900 text-emerald-200 rounded-lg p-3 text-xs overflow-x-auto"><code>{{ bcrypt_sample }}</code></pre>
+        <form method="post" class="space-y-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="target_user" value="{{ target }}">
+          <input type="hidden" name="mode" value="bcrypt">
+          <label for="bcand" class="block text-sm font-medium text-slate-700">Candidate password</label>
+          <input id="bcand" name="candidate" type="text" autocomplete="off"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 rounded-lg">Try bcrypt</button>
+        </form>
+        {% if bcrypt_result %}
+          <div class="border-t border-slate-100 pt-3 text-sm">
+            {% if bcrypt_result.matched %}
+              <p class="text-emerald-700 font-medium">&#10003; Match (this verification took ~250&nbsp;ms).</p>
+            {% else %}
+              <p class="text-slate-700">No match. Notice this took noticeably longer than the MD5 attempt &mdash; that slowness is the defense.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Wordlist (try these)</h2>
+    <div class="flex flex-wrap gap-2">
+      {% for w in wordlist %}
+        <code class="mono bg-slate-100 px-2 py-1 rounded text-sm">{{ w }}</code>
+      {% endfor %}
+    </div>
+    <p class="mt-4 text-sm">
+      <a href="{{ url_for('lesson_weakhash_intro') }}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to lesson intro</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

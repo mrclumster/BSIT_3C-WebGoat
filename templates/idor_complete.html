@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Lesson Complete{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+  <div class="flex items-center gap-4">
+    <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+      <i data-lucide="trophy" class="w-7 h-7"></i>
+    </div>
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Lesson Completed</p>
+      <h1 class="text-2xl font-bold text-slate-900">Insecure Direct Object Reference</h1>
+    </div>
+  </div>
+
+  <p class="text-slate-700">You read another user's profile by changing an ID in the URL. The endpoint accepted any ID without checking whether you owned that record.</p>
+
+  <div>
+    <h2 class="text-lg font-semibold text-slate-900 mb-3">Defense pattern</h2>
+    <ul class="space-y-3">
+      <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div><p class="font-medium text-slate-900">Authorize, don't authenticate.</p><p class="text-sm text-slate-600">Login proves <em>who</em> you are. Authorization proves you're allowed to access <em>this specific record</em>. Both are required.</p></div></li>
+      <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div><p class="font-medium text-slate-900">Prefer <code class="mono bg-slate-100 px-1 rounded text-xs">/me/...</code> routes.</p><p class="text-sm text-slate-600">Look up the record by the authenticated session, not by an ID in the URL. Removes the entire bug class.</p></div></li>
+      <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div><p class="font-medium text-slate-900">UUIDs as defense in depth.</p><p class="text-sm text-slate-600">Unguessable IDs slow attackers down but never replace a real authorization check.</p></div></li>
+    </ul>
+  </div>
+
+  <a href="{{ url_for('lessons_catalog') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+    <i data-lucide="layout-grid" class="w-4 h-4"></i> Next lesson
+  </a>
+</div>
+{% endblock %}

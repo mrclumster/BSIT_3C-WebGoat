@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Lesson Complete{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+  <div class="flex items-center gap-4">
+    <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+      <i data-lucide="trophy" class="w-7 h-7"></i>
+    </div>
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Lesson Completed</p>
+      <h1 class="text-2xl font-bold text-slate-900">SQL Injection (intro)</h1>
+    </div>
+  </div>
+
+  <p class="text-slate-700">
+    You exploited a deliberately vulnerable login form using SQL Injection,
+    bypassing authentication without knowing a valid password. This completion is
+    recorded against your account in the database.
+  </p>
+
+  <div>
+    <h2 class="text-lg font-semibold text-slate-900 mb-3">Reflection</h2>
+    <ul class="space-y-3">
+      <li class="flex items-start gap-3">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-medium text-slate-900">What the vulnerability is</p>
+          <p class="text-sm text-slate-600">User input concatenated into a SQL string lets attackers change the query's logic. <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-xs">admin' --</code> turns the WHERE clause into <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-xs">username = 'admin'</code> and comments out the password check.</p>
+        </div>
+      </li>
+      <li class="flex items-start gap-3">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-medium text-slate-900">Why it's dangerous</p>
+          <p class="text-sm text-slate-600">Authentication bypass, data theft, data destruction (<code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-xs">'; DROP TABLE ...</code>), and full database compromise are all possible.</p>
+        </div>
+      </li>
+      <li class="flex items-start gap-3">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-medium text-slate-900">How this app's real login prevents it</p>
+          <p class="text-sm text-slate-600">Every query in <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-xs">models.py</code> uses parameter placeholders, so SQLite treats input as data, never as SQL syntax. The same payloads fail on the secure form on the challenge page.</p>
+        </div>
+      </li>
+      <li class="flex items-start gap-3">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-medium text-slate-900">Defense in depth</p>
+          <p class="text-sm text-slate-600">Even if the query were vulnerable, bcrypt-hashed passwords, generic error messages, CSRF tokens, and rate limiting raise the cost of attack.</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="flex flex-wrap gap-2 pt-2">
+    <a href="{{ url_for('dashboard') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Back to dashboard
+    </a>
+    <a href="{{ url_for('security_page') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium">
+      <i data-lucide="file-text" class="w-4 h-4"></i> Read full security writeup
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Lesson: SQL Injection{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600">
+        <i data-lucide="database" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">SQL Injection (intro)</h1>
+        <p class="text-sm text-slate-500">A WebGoat-style hands-on lesson built into this app</p>
+      </div>
+    </div>
+    {% if completed %}
+      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Completed
+      </span>
+    {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
+        <i data-lucide="circle-dashed" class="w-3.5 h-3.5"></i> In progress
+      </span>
+    {% endif %}
+  </div>
+
+  <div class="flex flex-wrap gap-2 text-xs">
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Difficulty: Beginner</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">~10 minutes</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Topic: Injection</span>
+  </div>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">What is SQL Injection?</h2>
+    <p class="text-slate-700 leading-relaxed">
+      SQL Injection (SQLi) is an attack where untrusted input is concatenated directly into a SQL query,
+      letting an attacker change the meaning of the query. In a login form, this can bypass authentication
+      without knowing any password.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">How a vulnerable login works</h2>
+    <p class="text-slate-700 mb-3">A naive login builds its query like this:</p>
+    <pre class="bg-slate-900 text-slate-100 rounded-lg p-4 text-sm overflow-x-auto"><code>SELECT * FROM users
+WHERE username = '<span class="text-amber-300">USER_INPUT</span>'
+  AND password = '<span class="text-amber-300">USER_INPUT</span>'</code></pre>
+    <p class="text-slate-700 mt-3">
+      If the input is treated as code instead of data, an attacker can submit
+      <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">' OR '1'='1</code>
+      to make the WHERE clause always true.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">Your task</h2>
+    <ol class="list-decimal list-inside space-y-1 text-slate-700">
+      <li>Open the <strong>Challenge</strong> page.</li>
+      <li>Without knowing the password, log in as <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">admin</code> by injecting SQL.</li>
+      <li>When your injection succeeds, this app will mark the lesson <strong>Completed</strong> and store it in your account.</li>
+    </ol>
+  </section>
+
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+    <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+    <div class="text-sm text-blue-900">
+      <p class="font-semibold mb-1">Hint</p>
+      <p>
+        Classic payload — in the username field try
+        <code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">admin' --</code>
+        (note the trailing space after <code>--</code>). The <code>--</code> starts a SQL comment,
+        which makes the rest of the query (including the password check) get ignored.
+      </p>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    <a href="{{ url_for('lesson_sqli_challenge') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+      Start the challenge <i data-lucide="arrow-right" class="w-4 h-4"></i>
+    </a>
+    {% if completed %}
+      <a href="{{ url_for('lesson_sqli_complete') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium">
+        <i data-lucide="trophy" class="w-4 h-4"></i> View completion page
+      </a>
+    {% endif %}
+  </div>
+
+  <section class="border-t border-slate-200 pt-6">
+    <h2 class="text-lg font-semibold text-slate-900 mb-3">How <em>this</em> application's real login defends against SQLi</h2>
+    <ul class="space-y-2 text-slate-700">
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Every query in <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">models.py</code> uses parameterized statements (<code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">?</code> placeholders) — input is never parsed as SQL.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Passwords are hashed with bcrypt — even if a query were bypassed, the stored hash isn't usable.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Login errors are generic, so attackers can't tell if a username exists.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Rate limiting blocks rapid guessing.</li>
+    </ul>
+    <p class="mt-3 text-sm text-slate-500">Full writeup: <a href="{{ url_for('security_page') }}" class="text-brand-600 hover:text-brand-700 font-medium">/security</a></p>
+  </section>
+</div>
+{% endblock %}

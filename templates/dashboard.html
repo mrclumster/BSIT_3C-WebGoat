@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+        <i data-lucide="check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Welcome, {{ username }}</h1>
+        <p class="text-sm text-slate-500">You are logged in over a secure session.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+      <div>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Lesson Progress</h2>
+        <p class="text-xl font-bold text-slate-900 mt-1">{{ done }} of {{ total }} completed</p>
+      </div>
+      <a href="{{ url_for('lessons_catalog') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i> Open lesson catalog
+      </a>
+    </div>
+    <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-brand-500 to-emerald-500" style="width: {{ (done / total * 100) | round }}%"></div>
+    </div>
+
+    <ul class="mt-5 divide-y divide-slate-100">
+      {% for L in lessons %}
+        <li class="py-3 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <i data-lucide="{{ L.icon }}" class="w-4 h-4 text-brand-600 flex-shrink-0"></i>
+            <a href="{{ url_for(L.intro_endpoint) }}" class="text-sm font-medium text-slate-800 hover:text-brand-700 truncate">{{ L.title }}</a>
+          </div>
+          {% if L.completed %}
+            <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 flex-shrink-0">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Done
+            </span>
+          {% else %}
+            <span class="text-xs text-slate-500 flex-shrink-0">Open</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3">
+      <i data-lucide="lock" class="w-5 h-5 text-brand-600 mt-0.5"></i>
+      <div>
+        <p class="text-xs uppercase text-slate-500 font-semibold">Hashing</p>
+        <p class="text-sm font-medium text-slate-800">bcrypt (cost 12)</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3">
+      <i data-lucide="shield" class="w-5 h-5 text-brand-600 mt-0.5"></i>
+      <div>
+        <p class="text-xs uppercase text-slate-500 font-semibold">CSRF</p>
+        <p class="text-sm font-medium text-slate-800">Per-session tokens</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3">
+      <i data-lucide="zap" class="w-5 h-5 text-brand-600 mt-0.5"></i>
+      <div>
+        <p class="text-xs uppercase text-slate-500 font-semibold">Rate limit</p>
+        <p class="text-sm font-medium text-slate-800">5 logins / minute</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

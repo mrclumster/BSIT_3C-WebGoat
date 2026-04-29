@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, hint_box %}
+{% block title %}Lesson: Reflected XSS{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+  {{ lesson_header("code-2", "Reflected XSS", "Inject script into a vulnerable greeting page", completed) }}
+
+  <div class="flex flex-wrap gap-2 text-xs">
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Difficulty: Beginner</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">~5 minutes</span>
+    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">Topic: Injection</span>
+  </div>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">What is Reflected XSS?</h2>
+    <p class="text-slate-700">
+      Reflected Cross-Site Scripting happens when a page takes user input and
+      writes it directly into the HTML without escaping. If an attacker tricks a
+      victim into clicking a link with a malicious payload, the victim's browser
+      runs that script &mdash; potentially stealing cookies, redirecting them, or
+      defacing the page.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="text-lg font-semibold text-slate-900 mb-2">Your task</h2>
+    <ol class="list-decimal list-inside space-y-1 text-slate-700">
+      <li>Open the <strong>Challenge</strong> page &mdash; it has a vulnerable greeting form.</li>
+      <li>Submit a payload that injects HTML / JavaScript.</li>
+      <li>The lesson completes the moment your input contains an XSS pattern.</li>
+    </ol>
+  </section>
+
+  {{ hint_box('<p>Sample payloads:</p><ul class="list-disc list-inside mt-1"><li><code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">&lt;script&gt;alert(1)&lt;/script&gt;</code></li><li><code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">&lt;img src=x onerror=alert(1)&gt;</code></li><li><code class="bg-white border border-blue-200 px-1.5 py-0.5 rounded">&lt;svg onload=alert(1)&gt;</code></li></ul>') }}
+
+  <a href="{{ url_for('lesson_xss_challenge') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+    Start the challenge <i data-lucide="arrow-right" class="w-4 h-4"></i>
+  </a>
+
+  <section class="border-t border-slate-200 pt-6">
+    <h2 class="text-lg font-semibold text-slate-900 mb-3">How <em>this</em> app prevents XSS</h2>
+    <ul class="space-y-2 text-slate-700">
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> All Jinja2 template output is HTML-escaped by default. <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">{{'{{ value }}'}}</code> turns <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">&lt;script&gt;</code> into harmless text.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Input validation in <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">security.py</code> blocks usernames that contain HTML metacharacters.</li>
+      <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-1 flex-shrink-0"></i> Session cookies are <code class="mono bg-slate-100 px-1.5 py-0.5 rounded text-sm">HttpOnly</code> &mdash; even a successful XSS can't read them.</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header %}
+{% block title %}IDOR Challenge{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    {{ lesson_header("user-x", "Challenge: View someone else's profile", "You are 'logged in' as profile #" ~ owner_id, completed) }}
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
+    <h2 class="text-sm font-bold uppercase tracking-wider text-red-700 mb-3">Vulnerable endpoint</h2>
+    <p class="text-sm text-slate-700 mb-3">
+      <code class="mono bg-slate-100 px-1.5 py-0.5 rounded">GET /lesson/idor/profile/&lt;id&gt;</code> &mdash; no authorization check.
+      Click below to view a profile, or change the ID directly in the URL bar.
+    </p>
+    <div class="flex flex-wrap gap-2">
+      {% for pid in profiles.keys() %}
+        <a href="{{ url_for('lesson_idor_view', profile_id=pid) }}"
+           class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm
+           {% if pid == owner_id %}border-slate-300 text-slate-700 hover:bg-slate-50{% else %}border-red-300 text-red-700 hover:bg-red-50{% endif %}">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          Profile #{{ pid }}{% if pid == owner_id %} (you){% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <p class="text-sm">
+    <a href="{{ url_for('lesson_idor_intro') }}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to lesson intro</a>
+  </p>
+</div>
+{% endblock %}
