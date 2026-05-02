@@ -16,6 +16,9 @@
 1. Abdel-Aziz B. Tebbeng
 2. Kendrick U. Serrano
 3. John Erick C. Anacleto
+4. Rean D. Pelota
+5. Kristianni O. Lopez
+
 
 ## 🧭 What this project is
 
