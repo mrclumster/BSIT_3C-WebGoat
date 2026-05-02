@@ -1,53 +1,50 @@
+{# =========================================================================
+   The WebGoat Quarterly — Lesson Macros (Editorial Minimalism)
+   ========================================================================= #}
+
 {% macro lesson_header(icon, title, subtitle, completed) %}
-<div class="flex items-start justify-between gap-4">
+<div class="flex items-start justify-between gap-4 flex-wrap">
   <div class="flex items-start gap-4">
-    <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600">
+    <div class="w-12 h-12 flex items-center justify-center"
+         style="background: var(--surface-2); color: var(--accent); border: 1px solid var(--line); border-radius: var(--radius-sm);">
       <i data-lucide="{{ icon }}" class="w-6 h-6"></i>
     </div>
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ title }}</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
+      <p class="kicker">Lesson</p>
+      <h1 class="display text-2xl md:text-3xl leading-tight">{{ title }}</h1>
+      <p class="text-sm mt-0.5" style="color: var(--ink-soft);">{{ subtitle }}</p>
     </div>
   </div>
   {% if completed %}
-    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-      <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Completed
-    </span>
+    <span class="stamp stamp-ochre">Completed</span>
   {% else %}
-    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
-      <i data-lucide="circle-dashed" class="w-3.5 h-3.5"></i> In progress
-    </span>
+    <span class="tag"><i data-lucide="circle-dashed" class="w-3 h-3"></i> In progress</span>
   {% endif %}
 </div>
 {% endmacro %}
 
 {% macro hint_box(content) %}
-<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-  <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
-  <div class="text-sm text-blue-900">
-    <p class="font-semibold mb-1">Hint</p>
-    {{ content }}
-  </div>
+<div class="article article-tight" style="border-left: 3px solid var(--ink-soft);">
+  <p class="kicker kicker-ink">Hint</p>
+  <div class="text-sm">{{ content }}</div>
 </div>
 {% endmacro %}
 
 {% macro completion_banner(url) %}
-<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex items-start gap-3">
-  <i data-lucide="party-popper" class="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5"></i>
-  <div>
-    <p class="font-semibold text-emerald-900">Lesson complete!</p>
-    <p class="text-sm text-emerald-800">
-      <a href="{{ url }}" class="underline font-medium">View your completion page &rarr;</a>
-    </p>
-  </div>
+<div class="article" style="border-left: 3px solid var(--gold);">
+  <p class="kicker" style="color: var(--success);">Lesson complete</p>
+  <h3 class="display text-lg">All stages finished.</h3>
+  <p class="text-sm mt-1">
+    <a href="{{ url }}" class="link-underline">View summary &rarr;</a>
+  </p>
 </div>
 {% endmacro %}
 
-{# Vertical stepper showing all stages of a lesson and the active one. #}
+{# Vertical stage rail #}
 {% macro stepper(lesson, active_stage, completed_set, base_url) %}
-<aside class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sticky top-4">
-  <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold mb-3">Stages</p>
-  <ol class="space-y-2">
+<aside class="article article-tight stage-rail sticky top-4">
+  <p class="kicker">Stages</p>
+  <ol class="space-y-1.5 mt-2">
     {% for s in lesson.stages %}
       {% set sid = lesson.id ~ '-s' ~ s.n %}
       {% set is_done = sid in completed_set %}
@@ -56,24 +53,24 @@
       {% set is_locked = not prev_done and not is_done %}
       <li>
         {% if is_locked %}
-          <div class="flex items-start gap-2 p-2 rounded-lg text-slate-400 cursor-not-allowed" title="Solve previous stage first">
-            <i data-lucide="lock" class="w-4 h-4 mt-0.5"></i>
-            <div class="text-sm">
-              <p class="font-medium">Stage {{ s.n }}</p>
-              <p class="text-xs">{{ s.title }}</p>
+          <div class="item locked flex items-start gap-2.5 cursor-not-allowed" title="Solve previous stage first">
+            <i data-lucide="lock" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+            <div class="min-w-0">
+              <p class="mono text-[0.7rem] uppercase tracking-wider" style="color: var(--ink-faint);">Stage {{ "%02d"|format(s.n) }}</p>
+              <p class="text-sm font-medium leading-tight">{{ s.title }}</p>
             </div>
           </div>
         {% else %}
-          <a href="{{ base_url }}?stage={{ s.n }}" class="flex items-start gap-2 p-2 rounded-lg transition-all duration-200
-              {% if is_active %}bg-brand-50 ring-1 ring-brand-500{% else %}hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 hover:translate-x-0.5{% endif %}">
+          <a href="{{ base_url }}?stage={{ s.n }}"
+             class="flex items-start gap-2.5 {% if is_active %}active{% elif is_done %}done{% endif %}">
             {% if is_done %}
-              <i data-lucide="check-circle-2" class="w-4 h-4 mt-0.5 text-emerald-600"></i>
+              <i data-lucide="check-circle-2" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
             {% else %}
-              <i data-lucide="circle" class="w-4 h-4 mt-0.5 {% if is_active %}text-brand-600{% else %}text-slate-400{% endif %}"></i>
+              <i data-lucide="circle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
             {% endif %}
-            <div class="text-sm">
-              <p class="font-medium {% if is_active %}text-brand-700{% else %}text-slate-800 dark:text-slate-200{% endif %}">Stage {{ s.n }}</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ s.title }}</p>
+            <div class="min-w-0">
+              <p class="mono text-[0.7rem] uppercase tracking-wider" style="opacity: 0.7;">Stage {{ "%02d"|format(s.n) }}</p>
+              <p class="text-sm font-medium leading-tight">{{ s.title }}</p>
             </div>
           </a>
         {% endif %}
@@ -83,106 +80,108 @@
 </aside>
 {% endmacro %}
 
-{# Stage objective banner. #}
+{# Stage objective — quiet card with strong kicker #}
 {% macro stage_objective(stage) %}
-<div class="bg-slate-900 text-slate-100 rounded-xl p-5">
-  <p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Stage {{ stage.n }} objective</p>
-  <h2 class="text-lg font-bold mb-1">{{ stage.title }}</h2>
-  <p class="text-sm text-slate-300">{{ stage.objective }}</p>
+<div class="article" style="background: var(--surface-2); border-left: 3px solid var(--accent);">
+  <div class="flex items-baseline justify-between gap-3 flex-wrap">
+    <p class="kicker mb-0">Stage {{ "%02d"|format(stage.n) }} · Objective</p>
+    <span class="tag mono">{{ stage.title }}</span>
+  </div>
+  <p class="mt-3 text-[1rem] leading-relaxed" style="color: var(--ink);">{{ stage.objective }}</p>
 </div>
 {% endmacro %}
 
-{# 📖 Lesson section: concept paragraph. #}
+{# Concept #}
 {% macro concept_card(stage) %}
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-2">
-    <i data-lucide="book-open" class="w-5 h-5 text-brand-600"></i>
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">What's happening here?</h3>
-  </div>
-  <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ stage.concept }}</p>
+<div class="article">
+  <p class="kicker">Concept</p>
+  <h3 class="display text-lg mb-2">What's happening</h3>
+  <p class="text-[0.97rem] leading-relaxed">{{ stage.concept }}</p>
 </div>
 {% endmacro %}
 
-{# 📖 Lesson section: numbered how-to steps. #}
+{# Numbered how-to — clean enumerated list #}
 {% macro how_to_steps(stage) %}
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-3">
-    <i data-lucide="list-ordered" class="w-5 h-5 text-brand-600"></i>
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">How to exploit it</h3>
-  </div>
-  <ol class="list-decimal pl-5 space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-    {% for step in stage.how_to %}<li>{{ step }}</li>{% endfor %}
+<div class="article">
+  <p class="kicker">Procedure</p>
+  <h3 class="display text-lg mb-3">How to reproduce</h3>
+  <ol class="space-y-3 text-[0.97rem]">
+    {% for step in stage.how_to %}
+      <li class="grid grid-cols-[1.6rem_1fr] gap-3 items-baseline">
+        <span class="mono text-xs font-semibold" style="color: var(--accent);">{{ "%02d"|format(loop.index) }}</span>
+        <span>{{ step }}</span>
+      </li>
+    {% endfor %}
   </ol>
 </div>
 {% endmacro %}
 
-{# 📖 Lesson section: worked example with the demo answer visible + Run + Copy buttons. #}
+{# Worked example #}
 {% macro worked_example_block(stage, sandbox_url, csrf_token, sandbox_result=None) %}
-<div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-2">
-    <i data-lucide="flask-conical" class="w-5 h-5 text-amber-700"></i>
-    <h3 class="font-semibold text-amber-900">Worked example (answer visible — does not count for progress)</h3>
+<div class="article" style="border-left: 3px solid var(--gold); background: var(--gold-soft);">
+  <div class="flex items-center justify-between gap-2 flex-wrap">
+    <p class="kicker mb-0" style="color: var(--gold);">Worked example</p>
+    <span class="tag tag-ochre">Answer visible · no progress recorded</span>
   </div>
-  <p class="text-sm text-amber-900 mb-3">{{ stage.worked_example.description }}</p>
-  <div class="bg-white dark:bg-slate-900 border border-amber-200 rounded p-3 text-xs mono text-amber-900 mb-3 break-all flex items-start gap-2">
-    <div class="flex-1">payload / answer:  <span class="font-bold">{{ stage.worked_example.payload }}</span></div>
+  <p class="text-[0.95rem] mt-3">{{ stage.worked_example.description }}</p>
+
+  <div class="mt-3 flex items-start gap-2 p-3 rounded-md" style="background: var(--surface); border: 1px solid var(--line);">
+    <div class="flex-1 mono text-xs break-all leading-relaxed">
+      <span class="kicker kicker-ink mb-0 mr-1" style="color: var(--ink-faint);">payload</span>
+      <strong style="color: var(--ink);">{{ stage.worked_example.payload }}</strong>
+    </div>
     <button type="button"
             onclick='window.copyToClipboard({{ stage.worked_example.payload|tojson }}, "Payload")'
-            class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-amber-300 hover:bg-amber-100 text-amber-800 inline-flex items-center gap-1">
+            class="btn-zine sm">
       <i data-lucide="copy" class="w-3 h-3"></i> Copy
     </button>
   </div>
-  <p class="text-xs text-amber-900 mb-3">{{ stage.worked_example.explanation }}</p>
-  <form method="post" action="{{ sandbox_url }}">
+  <p class="text-sm mt-3" style="color: var(--ink-soft);">{{ stage.worked_example.explanation }}</p>
+
+  <form method="post" action="{{ sandbox_url }}" class="mt-4">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="stage" value="{{ stage.n }}">
-    <button class="btn-pop text-sm px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium inline-flex items-center gap-1.5">
+    <button class="btn-zine">
       <i data-lucide="play" class="w-4 h-4"></i> Run worked example
     </button>
   </form>
+
   {% if sandbox_result %}
-    <div class="mt-3 bg-slate-900 text-slate-100 rounded p-3 text-xs mono">
-      <p class="text-slate-400">// sandbox result (no progress recorded):</p>
-      <pre class="whitespace-pre-wrap">{{ sandbox_result }}</pre>
+    <div class="console mt-4">
+      <p class="dim">// sandbox · no progress recorded</p>
+      <pre class="whitespace-pre-wrap" style="background:transparent;border:0;box-shadow:none;padding:0;color:inherit;">{{ sandbox_result }}</pre>
     </div>
   {% endif %}
 </div>
 {% endmacro %}
 
-{# Intro-page sections ----------------------------------------------------- #}
+{# ===== Intro-page sections ===== #}
 
 {% macro why_it_matters_card(text) %}
-<div class="bg-rose-50 border border-rose-200 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-2">
-    <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-700"></i>
-    <h3 class="font-semibold text-rose-900">Why this matters</h3>
-  </div>
-  <p class="text-sm text-rose-900 leading-relaxed">{{ text }}</p>
+<div class="article" style="border-left: 3px solid var(--accent);">
+  <p class="kicker">Why this matters</p>
+  <p class="text-[1rem] leading-relaxed mt-1">{{ text }}</p>
 </div>
 {% endmacro %}
 
 {% macro background_card(paragraphs) %}
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-3">
-    <i data-lucide="brain" class="w-5 h-5 text-brand-600"></i>
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">Background you need</h3>
-  </div>
-  <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+<div class="article">
+  <p class="kicker">Background</p>
+  <h3 class="display text-lg mb-3">Background</h3>
+  <div class="space-y-3 text-[0.97rem] leading-relaxed">
     {% for p in paragraphs %}<p>{{ p }}</p>{% endfor %}
   </div>
 </div>
 {% endmacro %}
 
 {% macro outcomes_list(outcomes) %}
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-3">
-    <i data-lucide="target" class="w-5 h-5 text-brand-600"></i>
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">What you'll learn</h3>
-  </div>
-  <ul class="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+<div class="article">
+  <p class="kicker">Learning outcomes</p>
+  <h3 class="display text-lg mb-3">By the end of this lesson you will be able to:</h3>
+  <ul class="space-y-2 text-[0.97rem]">
     {% for o in outcomes %}
-      <li class="flex items-start gap-2">
-        <i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0"></i>
+      <li class="flex items-start gap-3">
+        <i data-lucide="check" class="w-4 h-4 mt-1 flex-shrink-0" style="color: var(--gold);"></i>
         <span>{{ o }}</span>
       </li>
     {% endfor %}
@@ -191,19 +190,20 @@
 {% endmacro %}
 
 {% macro vocab_card(items) %}
-<details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 group" open>
+<details class="article group" open>
   <summary class="cursor-pointer list-none flex items-center justify-between gap-2">
-    <span class="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
-      <i data-lucide="book-marked" class="w-5 h-5 text-brand-600"></i>
-      Key terms
-    </span>
-    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+    <div>
+      <p class="kicker mb-0">Glossary</p>
+      <h3 class="display text-xl mt-0.5">Key terms</h3>
+    </div>
+    <i data-lucide="chevron-down" class="w-4 h-4 group-open:rotate-180 transition-transform"></i>
   </summary>
-  <dl class="mt-4 space-y-2 text-sm">
+  <hr class="rule-double mt-4">
+  <dl class="mt-4 space-y-3 text-sm">
     {% for v in items %}
-      <div class="flex flex-col sm:flex-row gap-1 sm:gap-3">
-        <dt class="font-mono text-slate-900 dark:text-slate-100 sm:w-40 flex-shrink-0">{{ v.term }}</dt>
-        <dd class="text-slate-600 dark:text-slate-400">{{ v.def }}</dd>
+      <div class="grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-1 sm:gap-4">
+        <dt class="mono text-xs font-semibold" style="color: var(--accent);">{{ v.term }}</dt>
+        <dd class="text-[0.95rem]" style="color: var(--ink);">{{ v.def }}</dd>
       </div>
     {% endfor %}
   </dl>
@@ -211,21 +211,22 @@
 {% endmacro %}
 
 {% macro incidents_card(items) %}
-<details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 group">
+<details class="article group">
   <summary class="cursor-pointer list-none flex items-center justify-between gap-2">
-    <span class="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
-      <i data-lucide="newspaper" class="w-5 h-5 text-brand-600"></i>
-      Famous incidents
-    </span>
-    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+    <div>
+      <p class="kicker mb-0">From the archives</p>
+      <h3 class="display text-lg mt-0.5">Notable incidents</h3>
+    </div>
+    <i data-lucide="chevron-down" class="w-4 h-4 group-open:rotate-180 transition-transform"></i>
   </summary>
-  <ul class="mt-4 space-y-3 text-sm">
+  <hr class="rule-double mt-4">
+  <ul class="mt-4 space-y-4">
     {% for i in items %}
-      <li class="flex gap-3">
-        <span class="font-mono text-slate-500 dark:text-slate-400 flex-shrink-0">{{ i.year }}</span>
+      <li class="grid grid-cols-[3.4rem_1fr] gap-3 items-baseline">
+        <span class="display text-2xl" style="color: var(--accent); font-weight: 500;">{{ i.year }}</span>
         <div>
-          <p class="font-semibold text-slate-900 dark:text-slate-100">{{ i.name }}</p>
-          <p class="text-slate-600 dark:text-slate-400">{{ i.summary }}</p>
+          <p class="font-semibold display text-lg">{{ i.name }}</p>
+          <p class="text-sm" style="color: var(--ink-soft);">{{ i.summary }}</p>
         </div>
       </li>
     {% endfor %}
@@ -234,15 +235,13 @@
 {% endmacro %}
 
 {% macro prereqs_card(items) %}
-<div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
-  <div class="flex items-center gap-2 mb-3">
-    <i data-lucide="clipboard-check" class="w-5 h-5 text-blue-700"></i>
-    <h3 class="font-semibold text-blue-900">Before you start</h3>
-  </div>
-  <ul class="space-y-1.5 text-sm text-blue-900">
+<div class="article" style="border-left: 3px solid var(--ink);">
+  <p class="kicker kicker-ink">Before you start</p>
+  <h3 class="display text-lg mb-2">Prerequisites</h3>
+  <ul class="space-y-1.5 text-[0.95rem]">
     {% for p in items %}
-      <li class="flex items-start gap-2">
-        <i data-lucide="dot" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+      <li class="flex items-start gap-2.5">
+        <i data-lucide="dot" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: var(--accent);"></i>
         <span>{{ p }}</span>
       </li>
     {% endfor %}
@@ -250,38 +249,37 @@
 </div>
 {% endmacro %}
 
-{# 🎯 Challenge section header. Wrap the per-stage form below this. #}
+{# 🎯 Challenge section header #}
 {% macro challenge_section_header(stage) %}
-<div class="flex items-center gap-2 pt-2">
-  <i data-lucide="target" class="w-5 h-5 text-brand-600"></i>
-  <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Your challenge</h3>
-  <span class="text-xs text-slate-500 dark:text-slate-400">— apply the technique to a different target</span>
+<div class="flex items-baseline gap-3 pt-2">
+  <p class="kicker mb-0">Practical</p>
+  <hr class="flex-1" style="border-top: 1px solid var(--line);">
 </div>
+<h3 class="display text-xl leading-tight mt-1.5">Challenge</h3>
+<p class="text-sm" style="color: var(--ink-soft);">Apply the same technique to a different target.</p>
 {% endmacro %}
 
-{# Smart feedback for wrong attempts. kind = "warn" / "info" / "error". #}
+{# Smart wrong-attempt feedback #}
 {% macro wrong_feedback(message, kind="warn") %}
-{% set styles = {
-  'warn':  'bg-amber-50 border-amber-200 text-amber-900',
-  'info':  'bg-blue-50 border-blue-200 text-blue-900',
-  'error': 'bg-red-50 border-red-200 text-red-900',
-} %}
-<div class="border rounded-lg p-3 flex items-start gap-2 text-sm {{ styles.get(kind, styles['warn']) }}">
-  <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+{% set border = {'warn':'var(--gold)', 'info':'var(--ink-soft)', 'error':'var(--accent)'} %}
+{% set color =  {'warn':'var(--gold)', 'info':'var(--ink-soft)', 'error':'var(--accent)'} %}
+<div class="article article-tight flex items-start gap-2 text-sm"
+     style="border-left: 3px solid {{ border.get(kind, border['warn']) }};">
+  <i data-lucide="{{ {'warn':'alert-triangle','info':'info','error':'alert-circle'}.get(kind,'alert-triangle') }}"
+     class="w-4 h-4 flex-shrink-0 mt-0.5" style="color: {{ color.get(kind, color['warn']) }};"></i>
   <div>{{ message|safe }}</div>
 </div>
 {% endmacro %}
 
-{# Tiny inline button that prefills another input (by id) with a starter value. #}
 {% macro try_starter_button(target_id, starter, label="Try this starter") %}
 <button type="button"
         onclick="(function(){var el=document.getElementById('{{ target_id }}');if(el){el.value={{ starter|tojson }};el.focus();}})()"
-        class="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-slate-700 dark:text-slate-300 inline-flex items-center gap-1">
+        class="btn-zine sm">
   <i data-lucide="zap" class="w-3 h-3"></i> {{ label }}
 </button>
 {% endmacro %}
 
-{# Click-to-reveal progressive hints. HTMX swaps the inner card on click — no full reload. #}
+{# Click-to-reveal hints — HTMX swaps card #}
 {% macro progressive_hint(stage, revealed, reveal_url, csrf_token) %}
 <div id="hint-card-{{ stage.n }}">
   {{ progressive_hint_inner(stage, revealed, reveal_url, csrf_token) }}
@@ -289,16 +287,25 @@
 {% endmacro %}
 
 {% macro progressive_hint_inner(stage, revealed, reveal_url, csrf_token) %}
-<div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
-  <div class="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-semibold text-sm mb-2">
-    <i data-lucide="lightbulb" class="w-4 h-4"></i>
-    Hints ({{ revealed }}/{{ stage.hints|length }} revealed)
+<div class="article" style="background: var(--surface-2);">
+  <div class="flex items-center justify-between gap-2 flex-wrap">
+    <p class="kicker kicker-ink mb-0"><i data-lucide="lightbulb" class="w-3.5 h-3.5 inline" style="color: var(--accent);"></i> Hints</p>
+    <span class="tag">{{ revealed }} / {{ stage.hints|length }} revealed</span>
   </div>
-  <ol class="space-y-2 text-sm text-blue-900 dark:text-blue-100 mb-3 list-decimal pl-5">
-    {% for h in stage.hints[:revealed] %}<li>{{ h }}</li>{% endfor %}
-  </ol>
+  {% if revealed > 0 %}
+    <ol class="mt-4 space-y-2.5 text-[0.95rem] list-none pl-0">
+      {% for h in stage.hints[:revealed] %}
+        <li class="grid grid-cols-[1.4rem_1fr] gap-2 pb-2.5 border-b last:border-0" style="border-color: var(--line);">
+          <span class="mono text-xs font-semibold mt-0.5" style="color: var(--accent);">{{ "%02d"|format(loop.index) }}</span>
+          <span>{{ h }}</span>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="text-sm mt-3" style="color: var(--ink-soft);">Stuck? Reveal a hint below — they unlock one at a time.</p>
+  {% endif %}
   {% if revealed < stage.hints|length %}
-    <button class="btn-pop text-xs px-3 py-1.5 rounded-md border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-slate-800 text-blue-800 dark:text-blue-200 inline-flex items-center gap-1"
+    <button class="btn-zine sm mt-4"
             hx-post="{{ reveal_url }}"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-vals='{"stage": "{{ stage.n }}"}'
@@ -306,12 +313,13 @@
             hx-swap="innerHTML">
       <i data-lucide="lightbulb" class="w-3 h-3"></i> Reveal next hint
     </button>
+  {% else %}
+    <p class="kicker kicker-ink mt-4 mb-0">All hints revealed.</p>
   {% endif %}
 </div>
 {% endmacro %}
 
-{# Stage solved → toast notification (and celebration modal on full lesson done).
-   No inline banner — the toast is the primary, scroll-position-independent feedback. #}
+{# Stage solved — toast / celebration trigger #}
 {% macro stage_solved_banner(next_stage_n, base_url, lesson_complete, lesson_title="this lesson") %}
 <script>
   (function () {
@@ -319,7 +327,7 @@
       {% if lesson_complete %}
         document.dispatchEvent(new CustomEvent('celebrate', {
           detail: {
-            title: 'You finished {{ lesson_title|e }}!',
+            title: 'You finished {{ lesson_title|e }}.',
             message: 'Every stage in this lesson is now complete.',
             continueUrl: {{ (base_url|replace('/challenge','/complete'))|tojson }}
           }
@@ -327,7 +335,7 @@
       {% else %}
         document.dispatchEvent(new CustomEvent('toast', {
           detail: {
-            message: {% if next_stage_n %}'Stage solved! Stage {{ next_stage_n }} unlocked.'{% else %}'Stage solved!'{% endif %},
+            message: {% if next_stage_n %}'Stage solved. Stage {{ next_stage_n }} unlocked.'{% else %}'Stage solved.'{% endif %},
             kind: 'success',
             ttl: 4500
           }
@@ -340,14 +348,14 @@
 </script>
 {% endmacro %}
 
-{# Convenience macro: render the full Lesson section (concept + how-to + worked example) #}
+{# Convenience — render full Lesson section #}
 {% macro lesson_section(stage, sandbox_url, csrf_token, sandbox_result=None) %}
 <div class="space-y-4">
-  <div class="flex items-center gap-2">
-    <i data-lucide="book-open" class="w-5 h-5 text-brand-600"></i>
-    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Lesson</h3>
-    <span class="text-xs text-slate-500 dark:text-slate-400">— learn the technique first</span>
+  <div class="flex items-baseline gap-3">
+    <p class="kicker mb-0">Theory</p>
+    <hr class="flex-1" style="border-top: 1px solid var(--line);">
   </div>
+  <h3 class="display text-xl leading-tight">Lesson</h3>
   {{ concept_card(stage) }}
   {{ how_to_steps(stage) }}
   {{ worked_example_block(stage, sandbox_url, csrf_token, sandbox_result) }}

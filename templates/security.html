@@ -1,72 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Security Writeup{% endblock %}
+{% block title %}Security Details{% endblock %}
 {% block content %}
-<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 space-y-6">
-  <div class="flex items-center gap-3">
-    <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600">
-      <i data-lucide="shield" class="w-6 h-6"></i>
-    </div>
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Vulnerability Awareness &amp; Defenses</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">How this login system resists common attacks</p>
-    </div>
-  </div>
+<div class="space-y-8 reveal-stagger">
+
+  <section class="article">
+    <p class="kicker">Security</p>
+    <h1 class="display text-3xl md:text-4xl leading-tight">How this application stays safe</h1>
+    <p class="deck mt-3">The lessons demonstrate vulnerabilities deliberately. The application's real authentication surface is not vulnerable. Below are the defenses applied to it.</p>
+  </section>
 
   {% set sections = [
-    ('database', '1. SQL Injection',
+    ('database', '01', 'SQL Injection',
      "A vulnerable login query like <code>\"SELECT * FROM users WHERE username='\" + u + \"' AND password='\" + p + \"'\"</code> can be bypassed with a payload such as <code>' OR '1'='1</code>, granting access without valid credentials.",
      'Every query in <code>models.py</code> uses parameter placeholders (<code>?</code>), so user input is bound as a value and never interpreted as SQL.'),
-    ('key', '2. Broken Authentication',
+    ('key', '02', 'Broken Authentication',
      'If passwords were stored in plaintext, a single database leak would expose every user&rsquo;s credentials &mdash; and because users reuse passwords, attackers could pivot to other services (credential stuffing).',
      'Passwords are hashed with <strong>bcrypt</strong> (cost factor 12). Bcrypt is salted and intentionally slow, making brute-force and rainbow-table attacks infeasible.'),
-    ('users', '3. Username Enumeration',
+    ('users', '03', 'Username Enumeration',
      'Returning different errors for &ldquo;user not found&rdquo; vs. &ldquo;wrong password&rdquo; lets attackers enumerate valid usernames.',
      'A single generic message &mdash; <em>&ldquo;Invalid username or password.&rdquo;</em> &mdash; is shown for any failed login.'),
-    ('zap', '4. Brute Force / Credential Stuffing',
+    ('zap', '04', 'Brute Force / Credential Stuffing',
      'Without rate limiting, attackers can try thousands of password guesses per minute.',
      'Flask-Limiter caps <code>/login</code> at <strong>5 attempts per minute per IP</strong> and <code>/register</code> at 10 per hour.'),
-    ('shield-alert', '5. Cross-Site Request Forgery (CSRF)',
+    ('shield-alert', '05', 'Cross-Site Request Forgery',
      'An attacker could host a page that auto-submits a form to our app using a victim&rsquo;s session cookie.',
      'Flask-WTF&rsquo;s <code>CSRFProtect</code> requires a per-session token on every state-changing form.'),
-    ('cookie', '6. Session Hijacking &amp; XSS Cookie Theft',
+    ('cookie', '06', 'Session Hijacking &amp; XSS Cookie Theft',
      'A stolen session cookie equals a stolen account.',
      'Session cookies are flagged <code>HttpOnly</code> (not readable by JS), <code>SameSite=Lax</code> (not sent on cross-site requests), and <code>Secure</code> in production (HTTPS only).'),
-    ('check-circle-2', '7. Weak Input Validation',
+    ('check-circle-2', '07', 'Weak Input Validation',
      'Unvalidated input can carry payloads for injection, XSS, or oversized values that exhaust server resources.',
      'Server-side validation enforces a username regex (<code>[A-Za-z0-9_.-]{3,32}</code>) and a password length policy (8&ndash;128 chars). Templates auto-escape output via Jinja2.')
   ] %}
 
-  {% for icon, title, threat, defense in sections %}
-    <section class="border-l-4 border-brand-500 pl-5 py-1">
-      <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-2">
-        <i data-lucide="{{ icon }}" class="w-5 h-5 text-brand-600"></i>{{ title }}
-      </h2>
-      <p class="text-slate-700 dark:text-slate-300 mb-2"><span class="font-semibold text-red-700">The threat:</span> {{ threat|safe }}</p>
-      <p class="text-slate-700 dark:text-slate-300"><span class="font-semibold text-emerald-700">Our defense:</span> {{ defense|safe }}</p>
-    </section>
+  {% for icon, num, title, threat, defense in sections %}
+    <article class="article">
+      <div class="grid grid-cols-[3.5rem_1fr] gap-4 items-baseline border-b-2 border-current pb-3 mb-4">
+        <span class="display text-5xl leading-none" style="color: var(--alarm);">{{ num }}</span>
+        <div>
+          <p class="kicker mb-0">Threat Brief · {{ num }} of 07</p>
+          <h2 class="display text-2xl leading-tight"><i data-lucide="{{ icon }}" class="w-5 h-5 inline mr-1"></i>{{ title }}</h2>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="kicker"><span style="color: var(--alarm);">▌</span> The threat</p>
+          <p class="text-[0.95rem] leading-relaxed">{{ threat|safe }}</p>
+        </div>
+        <div>
+          <p class="kicker"><span style="color: var(--ochre);">▌</span> Our defense</p>
+          <p class="text-[0.95rem] leading-relaxed">{{ defense|safe }}</p>
+        </div>
+      </div>
+    </article>
   {% endfor %}
 
-  <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-    <h2 class="text-lg font-semibold text-amber-900 flex items-center gap-2 mb-3">
-      <i data-lucide="alert-octagon" class="w-5 h-5"></i> What if these measures were absent?
-    </h2>
-    <ul class="space-y-1 text-sm text-amber-900">
-      <li>&bull; No hashing &rarr; full credential compromise on any DB leak.</li>
-      <li>&bull; String-concatenated SQL &rarr; trivial authentication bypass.</li>
-      <li>&bull; No rate limit &rarr; offline-style brute force over the network.</li>
-      <li>&bull; No CSRF token &rarr; logout/state changes triggered from any malicious site.</li>
-      <li>&bull; Verbose errors &rarr; user enumeration and database fingerprinting.</li>
+  <article class="article" style="background: var(--ink); color: var(--paper); border-color: var(--ink);">
+    <p class="kicker" style="color: var(--alarm);">Counter-Factual · If absent</p>
+    <h2 class="display text-3xl leading-tight" style="color: var(--paper);">What if these measures were <em style="color: var(--alarm);">absent?</em></h2>
+    <ul class="mt-4 space-y-2 text-[0.95rem]">
+      <li class="grid grid-cols-[2rem_1fr] gap-2"><span class="mono" style="color: var(--alarm);">▌</span><span>No hashing &rarr; full credential compromise on any DB leak.</span></li>
+      <li class="grid grid-cols-[2rem_1fr] gap-2"><span class="mono" style="color: var(--alarm);">▌</span><span>String-concatenated SQL &rarr; trivial authentication bypass.</span></li>
+      <li class="grid grid-cols-[2rem_1fr] gap-2"><span class="mono" style="color: var(--alarm);">▌</span><span>No rate limit &rarr; offline-style brute force over the network.</span></li>
+      <li class="grid grid-cols-[2rem_1fr] gap-2"><span class="mono" style="color: var(--alarm);">▌</span><span>No CSRF token &rarr; logout / state changes triggered from any malicious site.</span></li>
+      <li class="grid grid-cols-[2rem_1fr] gap-2"><span class="mono" style="color: var(--alarm);">▌</span><span>Verbose errors &rarr; user enumeration and database fingerprinting.</span></li>
     </ul>
-  </div>
-
-  <style>
-    section code, .bg-amber-50 code {
-      font-family: 'JetBrains Mono', monospace;
-      background: rgb(241 245 249);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 0.85em;
-    }
-  </style>
+  </article>
 </div>
 {% endblock %}

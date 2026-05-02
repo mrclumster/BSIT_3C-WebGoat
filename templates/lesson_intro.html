@@ -1,89 +1,94 @@
 {% extends "base.html" %}
 {% from "_lesson_macros.html" import lesson_header, why_it_matters_card, background_card, outcomes_list, vocab_card, incidents_card, prereqs_card %}
-{% block title %}Lesson: {{ lesson.title }}{% endblock %}
+{% block title %}{{ lesson.title }}{% endblock %}
 {% block content %}
-<div class="space-y-6">
+{% set diff_label = {'Beginner':'Easy', 'Intermediate':'Mid', 'Advanced':'Hard'} %}
+<div class="space-y-8 reveal-stagger">
 
-  {# Header card #}
-  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 space-y-4">
-    {{ lesson_header(lesson.icon, lesson.title, "WebGoat-style multi-stage challenge", completed) }}
+  {# ============== ISSUE COVER ============== #}
+  <section class="article relative overflow-hidden">
+    <span class="absolute right-4 -top-2 display leading-none pointer-events-none"
+          style="font-size: 11rem; color: var(--paper-2); z-index: 0;">{{ "%02d"|format(lesson.stages|length) }}</span>
 
-    <div class="flex flex-wrap gap-2 text-xs">
-      {% set diff_class = {
-        'Beginner':     'bg-emerald-100 text-emerald-800 border-emerald-200',
-        'Intermediate': 'bg-amber-100 text-amber-800 border-amber-200',
-        'Advanced':     'bg-rose-100 text-rose-800 border-rose-200'
-      } %}
-      <span class="px-2.5 py-1 rounded-full border {{ diff_class.get(lesson.difficulty, 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700') }}">Difficulty: {{ lesson.difficulty }}</span>
-      <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{{ lesson.duration }}</span>
-      <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Topic: {{ lesson.topic }}</span>
-      <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100">{{ lesson.stages|length }} stages</span>
+    <div class="relative" style="z-index:1;">
+      <div class="meta-row" style="border:none; padding-bottom: 0;">
+        <span>Lesson &middot; {{ lesson.id|upper }}</span>
+        <span class="hidden md:inline" style="text-transform:none; letter-spacing:0;">{{ lesson.duration }} &middot; {{ lesson.stages|length }} stages</span>
+        <span>Topic &middot; {{ lesson.topic }}</span>
+      </div>
+      <hr class="rule-double mt-2 mb-4">
+
+      {{ lesson_header(lesson.icon, lesson.title, "Multi-stage lesson", completed) }}
+
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="tag {{ 'tag-alarm' if lesson.difficulty == 'Advanced' else 'tag-paper' }}">Difficulty · {{ diff_label.get(lesson.difficulty, lesson.difficulty) }}</span>
+        <span class="tag tag-soft">{{ lesson.duration }}</span>
+        <span class="tag">{{ lesson.topic }}</span>
+        <span class="tag tag-ink">{{ lesson.stages|length }} stages</span>
+      </div>
+
+      <p class="text-[1.05rem] mt-5 leading-relaxed dropcap">{{ lesson.description }}</p>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{{ url_for(lesson.challenge_endpoint) }}" class="btn-zine primary">
+          Start lesson <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+        {% if completed %}
+          <a href="{{ url_for(lesson.complete_endpoint) }}" class="btn-zine solved">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> View summary
+          </a>
+        {% endif %}
+      </div>
     </div>
+  </section>
 
-    <p class="text-slate-700 dark:text-slate-300 leading-relaxed">{{ lesson.description }}</p>
-  </div>
-
+  {# ============== EDITORIAL ============== #}
   {{ why_it_matters_card(lesson.why_it_matters) }}
 
   {{ background_card(lesson.background) }}
 
   {{ outcomes_list(lesson.learning_outcomes) }}
 
-  <div class="grid md:grid-cols-2 gap-4">
+  <div class="grid md:grid-cols-2 gap-6">
     {{ vocab_card(lesson.vocabulary) }}
     {{ incidents_card(lesson.incidents) }}
   </div>
 
   {{ prereqs_card(lesson.prerequisites) }}
 
-  {# Stages preview #}
-  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <i data-lucide="list-ordered" class="w-5 h-5 text-brand-600"></i>
-      <h3 class="font-semibold text-slate-900 dark:text-slate-100">Stages</h3>
-    </div>
-    <ol class="space-y-3">
+  {# ============== STAGE LIST ============== #}
+  <section class="article">
+    <p class="kicker">Stages</p>
+    <h3 class="display text-xl mb-4">What you'll work through</h3>
+    <ol class="divide-y" style="border-color: var(--line);">
       {% for s in lesson.stages %}
         {% set sid = lesson.id ~ '-s' ~ s.n %}
-        <li class="group lift-hover border border-slate-200 dark:border-slate-700 hover:border-brand-300 rounded-xl p-4 cursor-default card-fade-in"
-            style="animation-delay: {{ loop.index0 * 60 }}ms">
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm flex-shrink-0 group-hover:bg-brand-100 group-hover:scale-110 transition-transform">{{ s.n }}</div>
-            <div class="flex-1">
-              <div class="flex items-center justify-between gap-3">
-                <p class="font-semibold text-slate-900 dark:text-slate-100">{{ s.title }}</p>
-                {% if sid in completed_set %}
-                  <span class="text-xs inline-flex items-center gap-1 text-emerald-700"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> done</span>
-                {% endif %}
-              </div>
-              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ s.objective }}</p>
-              {% if s.learning_outcome %}
-                <p class="text-xs text-emerald-700 mt-2 flex items-start gap-1">
-                  <i data-lucide="sparkles" class="w-3.5 h-3.5 mt-0.5 flex-shrink-0"></i>
-                  <span>{{ s.learning_outcome }}</span>
-                </p>
-              {% endif %}
-            </div>
+        <li class="grid grid-cols-[3rem_1fr_auto] gap-4 items-baseline py-4 first:pt-0 last:pb-0">
+          <span class="mono text-sm font-semibold" style="color: var(--ink-faint);">{{ "%02d"|format(s.n) }}</span>
+          <div>
+            <p class="font-semibold leading-tight">{{ s.title }}</p>
+            <p class="text-sm mt-1" style="color: var(--ink-soft);">{{ s.objective }}</p>
+            {% if s.learning_outcome %}
+              <p class="text-xs mt-2" style="color: var(--ink-faint);">&rarr; {{ s.learning_outcome }}</p>
+            {% endif %}
+          </div>
+          <div class="flex-shrink-0">
+            {% if sid in completed_set %}
+              <span class="tag tag-ochre"><i data-lucide="check" class="w-3 h-3"></i> Done</span>
+            {% else %}
+              <span class="tag tag-soft">Pending</span>
+            {% endif %}
           </div>
         </li>
       {% endfor %}
     </ol>
-  </div>
+  </section>
 
-  {# CTAs #}
-  <div class="flex flex-wrap gap-2">
-    <a href="{{ url_for(lesson.challenge_endpoint) }}" class="group btn-pop inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
-      Open challenge <i data-lucide="arrow-right" class="w-4 h-4 arrow-shift"></i>
-    </a>
-    {% if completed %}
-      <a href="{{ url_for(lesson.complete_endpoint) }}" class="btn-pop inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-sm font-medium">
-        <i data-lucide="trophy" class="w-4 h-4"></i> Completion page
-      </a>
-    {% endif %}
-  </div>
-
-  <section class="border-t border-slate-200 dark:border-slate-700 pt-6 text-sm text-slate-600 dark:text-slate-400">
-    <p>The vulnerabilities below live in isolated demo routes only. The application's <em>real</em> login (<code class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">/login</code>, <code class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">/register</code>) uses parameterized queries, bcrypt, CSRF tokens and rate limiting — see <a href="{{ url_for('security_page') }}" class="text-brand-600 hover:text-brand-700 font-medium">How this app stays safe</a>.</p>
+  <section class="article article-quiet">
+    <p class="kicker">Note</p>
+    <p class="text-[0.95rem]">The vulnerabilities below exist only on isolated demo routes. The actual sign-in endpoints
+      (<code>/login</code>, <code>/register</code>) use parameterized queries, bcrypt, CSRF tokens, and rate limiting.
+      See <a href="{{ url_for('security_page') }}" class="link-underline">Security details</a>.</p>
   </section>
 </div>
 {% endblock %}

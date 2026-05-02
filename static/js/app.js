@@ -40,7 +40,7 @@ window.toastBus = function () {
       setTimeout(() => { try { window.lucide && window.lucide.createIcons(); } catch(e){} }, 30);
       if (typeof window.confetti === 'function') {
         const end = Date.now() + 1200;
-        const colors = ['#4338ca', '#10b981', '#f59e0b'];
+        const colors = ['#c41818', '#0c0a08', '#b07a1f', '#f1e9d6'];
         (function frame() {
           window.confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 }, colors });
           window.confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 }, colors });
