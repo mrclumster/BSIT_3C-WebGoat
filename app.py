@@ -10,6 +10,7 @@ from flask import (
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from models import UserStore
 from security import (
@@ -30,6 +31,8 @@ LESSON_IDOR       = "access-control"
 load_dotenv()
 
 app = Flask(__name__)
+# Trust Render's reverse proxy so request.scheme is correct (HTTPS) and remote IP is real client IP.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-me"),
     SESSION_COOKIE_HTTPONLY=True,
