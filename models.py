@@ -68,6 +68,16 @@ class UserStore:
             ).fetchone()
         return row is not None
 
+    def completed_stage_count(self, user_id: int, lesson_prefix: str) -> int:
+        """Count rows like '<prefix>-s%' for showing per-lesson stage progress."""
+        with self._conn() as c:
+            row = c.execute(
+                "SELECT COUNT(*) AS n FROM lesson_completions "
+                "WHERE user_id = ? AND lesson_id LIKE ?",
+                (user_id, f"{lesson_prefix}-s%"),
+            ).fetchone()
+        return int(row["n"]) if row else 0
+
     def completed_lessons(self, user_id: int):
         with self._conn() as c:
             rows = c.execute(

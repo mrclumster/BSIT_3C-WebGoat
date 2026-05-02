@@ -82,3 +82,38 @@ Jinja2 auto-escapes all template output, mitigating reflected XSS.
 | CSRF token | Forced logout, account changes from any malicious site the user visits. |
 | Generic errors | Username enumeration; targeted credential stuffing. |
 | Secure cookie flags | Session theft via XSS or HTTP sniffing. |
+
+---
+
+## Appendix: WebGoat-Intermediate Lesson Exploits
+
+The five lessons under `/lessons` deliberately demonstrate working exploit chains in isolated demo routes. Each chain teaches *why* common naive defenses fail. None of these vulnerabilities exist in the surrounding production routes (`/login`, `/register`).
+
+### SQL Injection (`/lesson/sqli`)
+- **S1 — case-sensitive blacklist bypass.** A naive WAF rejects `UNION`, `OR `, `SELECT`. SQL is case-insensitive, so `oR` / `UnIoN sElEcT` sail past. Real fix: parameterized queries (input is data, not code), not keyword filtering.
+- **S2 — UNION-based extraction.** A `LIKE '%term%'` interpolation lets an attacker `UNION SELECT` arbitrary columns from any table. Mitigation: parameterize, plus principle-of-least-privilege on the DB user.
+- **S3 — blind boolean SQLi.** Even with no error output, a binary "exists/doesn't" response leaks one bit per request — enough to extract any string with `SUBSTR()` probes. Mitigation: parameterize, generic responses, anomaly detection on probe-shaped traffic.
+
+### Browser Devtools Primer (`/lesson/devtools`)
+- **S1 — View Source.** HTML comments ship to the browser. Anything stored in a comment is reachable via `Ctrl+U` regardless of the rendered UI. Never put secrets, TODOs, or hints in the served HTML.
+- **S2 — Inspect Element.** `type="hidden"` controls visual rendering only — the DOM still holds the value, and any user can read it via the Elements panel.
+- **S3 — Console.** Any global JS variable is reachable from the Console. Base64 / character-substitution "obfuscation" is reversible in one line (`atob(...)`).
+- **S4 — Network tab.** Every request and its full headers (request and response) are visible. Diagnostic data left in `X-*` headers leaks to anyone with devtools.
+
+### Client-Side Trust (`/lesson/client-side`)
+- **S1 — hidden price field.** Server trusted a price the client sent. Always re-look-up the canonical price on the server using a product id, never accept a price from the form.
+- **S2 — role cookie.** A cookie containing `role=guest` is just attacker-writable storage. Authorization data must be a server-side session lookup or a signed token that the server validates.
+- **S3 — localStorage session.** localStorage is fully readable/writable by the user. Don't store authorization claims there; if you must, sign them with a server-only key and verify the signature.
+- **S4 — disabled button.** The `disabled` attribute is a UI hint, not an authorization check. Servers must reject the action regardless of how the request was submitted.
+
+### Cross-Site Scripting (`/lesson/xss`)
+- **S1 — tag-stripping naive sanitizer.** Stripping `<script>` does nothing about event handlers (`onerror=`). Use context-aware output encoding and CSP, not blocklists.
+- **S2 — stored XSS, on*= filter.** `<iframe srcdoc="...">` carries inner HTML through the outer-attribute filter. Mitigation: a real HTML sanitizer (DOMPurify) and CSP without `unsafe-inline`.
+- **S3 — DOM XSS.** `innerHTML = location.hash` is a sink → source flow. Use `textContent` for untrusted strings, or template engines that escape.
+
+### Broken Access Control (`/lesson/access-control`)
+- **S1 — predictable IDs.** No ownership check on `/profile/<id>`. Always check `current_user.id == requested_resource.owner_id`.
+- **S2 — encoded IDs.** Base64 is encoding, not authorization. The vulnerability is identical to S1.
+- **S3 — hidden-field tampering.** `<input type=hidden name=from_account>` lives in the client; never trust it. Derive the source account from the session.
+- **S4 — mass assignment.** `dict.update(form)` lets clients set fields the form never showed (`role=admin`). Allowlist updateable fields.
+

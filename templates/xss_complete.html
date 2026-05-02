@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Lesson Complete{% endblock %}
 {% block content %}
-<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 space-y-6">
   <div class="flex items-center gap-4">
     <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
       <i data-lucide="trophy" class="w-7 h-7"></i>
     </div>
     <div>
       <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Lesson Completed</p>
-      <h1 class="text-2xl font-bold text-slate-900">Reflected XSS</h1>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Reflected XSS</h1>
     </div>
   </div>
 
-  <p class="text-slate-700">You injected a script payload into a page that rendered input as raw HTML. In a real victim's browser the script would have executed with the same privileges as the page itself.</p>
+  <p class="text-slate-700 dark:text-slate-300">You injected a script payload into a page that rendered input as raw HTML. In a real victim's browser the script would have executed with the same privileges as the page itself.</p>
 
   <div>
-    <h2 class="text-lg font-semibold text-slate-900 mb-3">Defenses in this app</h2>
+    <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">Defenses in this app</h2>
     <ul class="space-y-3">
       <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
-        <div><p class="font-medium text-slate-900">Auto-escape by default.</p><p class="text-sm text-slate-600">Jinja2 escapes every variable rendered with <code class="mono bg-slate-100 px-1 rounded text-xs">{{'{{ }}'}}</code> unless you explicitly mark it <code class="mono bg-slate-100 px-1 rounded text-xs">| safe</code> (which we never do for user input).</p></div></li>
+        <div><p class="font-medium text-slate-900 dark:text-slate-100">Auto-escape by default.</p><p class="text-sm text-slate-600 dark:text-slate-400">Jinja2 escapes every variable rendered with <code class="mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">{{'{{ }}'}}</code> unless you explicitly mark it <code class="mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">| safe</code> (which we never do for user input).</p></div></li>
       <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
-        <div><p class="font-medium text-slate-900">Strict input validation.</p><p class="text-sm text-slate-600">Usernames are restricted to <code class="mono bg-slate-100 px-1 rounded text-xs">[A-Za-z0-9_.-]</code> &mdash; HTML metacharacters never reach the database.</p></div></li>
+        <div><p class="font-medium text-slate-900 dark:text-slate-100">Strict input validation.</p><p class="text-sm text-slate-600 dark:text-slate-400">Usernames are restricted to <code class="mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">[A-Za-z0-9_.-]</code> &mdash; HTML metacharacters never reach the database.</p></div></li>
       <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
-        <div><p class="font-medium text-slate-900">HttpOnly cookies.</p><p class="text-sm text-slate-600">Even if XSS were exploited, <code class="mono bg-slate-100 px-1 rounded text-xs">document.cookie</code> wouldn't expose the session.</p></div></li>
+        <div><p class="font-medium text-slate-900 dark:text-slate-100">HttpOnly cookies.</p><p class="text-sm text-slate-600 dark:text-slate-400">Even if XSS were exploited, <code class="mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-xs">document.cookie</code> wouldn't expose the session.</p></div></li>
     </ul>
   </div>
 

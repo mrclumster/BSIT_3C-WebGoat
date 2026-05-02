@@ -5,8 +5,8 @@
       <i data-lucide="{{ icon }}" class="w-6 h-6"></i>
     </div>
     <div>
-      <h1 class="text-2xl font-bold text-slate-900">{{ title }}</h1>
-      <p class="text-sm text-slate-500">{{ subtitle }}</p>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ title }}</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
     </div>
   </div>
   {% if completed %}
@@ -40,5 +40,320 @@
       <a href="{{ url }}" class="underline font-medium">View your completion page &rarr;</a>
     </p>
   </div>
+</div>
+{% endmacro %}
+
+{# Vertical stepper showing all stages of a lesson and the active one. #}
+{% macro stepper(lesson, active_stage, completed_set, base_url) %}
+<aside class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sticky top-4">
+  <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold mb-3">Stages</p>
+  <ol class="space-y-2">
+    {% for s in lesson.stages %}
+      {% set sid = lesson.id ~ '-s' ~ s.n %}
+      {% set is_done = sid in completed_set %}
+      {% set is_active = active_stage == s.n %}
+      {% set prev_done = s.n == 1 or ((lesson.id ~ '-s' ~ (s.n - 1)) in completed_set) %}
+      {% set is_locked = not prev_done and not is_done %}
+      <li>
+        {% if is_locked %}
+          <div class="flex items-start gap-2 p-2 rounded-lg text-slate-400 cursor-not-allowed" title="Solve previous stage first">
+            <i data-lucide="lock" class="w-4 h-4 mt-0.5"></i>
+            <div class="text-sm">
+              <p class="font-medium">Stage {{ s.n }}</p>
+              <p class="text-xs">{{ s.title }}</p>
+            </div>
+          </div>
+        {% else %}
+          <a href="{{ base_url }}?stage={{ s.n }}" class="flex items-start gap-2 p-2 rounded-lg transition-all duration-200
+              {% if is_active %}bg-brand-50 ring-1 ring-brand-500{% else %}hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 hover:translate-x-0.5{% endif %}">
+            {% if is_done %}
+              <i data-lucide="check-circle-2" class="w-4 h-4 mt-0.5 text-emerald-600"></i>
+            {% else %}
+              <i data-lucide="circle" class="w-4 h-4 mt-0.5 {% if is_active %}text-brand-600{% else %}text-slate-400{% endif %}"></i>
+            {% endif %}
+            <div class="text-sm">
+              <p class="font-medium {% if is_active %}text-brand-700{% else %}text-slate-800 dark:text-slate-200{% endif %}">Stage {{ s.n }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ s.title }}</p>
+            </div>
+          </a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</aside>
+{% endmacro %}
+
+{# Stage objective banner. #}
+{% macro stage_objective(stage) %}
+<div class="bg-slate-900 text-slate-100 rounded-xl p-5">
+  <p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Stage {{ stage.n }} objective</p>
+  <h2 class="text-lg font-bold mb-1">{{ stage.title }}</h2>
+  <p class="text-sm text-slate-300">{{ stage.objective }}</p>
+</div>
+{% endmacro %}
+
+{# 📖 Lesson section: concept paragraph. #}
+{% macro concept_card(stage) %}
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-2">
+    <i data-lucide="book-open" class="w-5 h-5 text-brand-600"></i>
+    <h3 class="font-semibold text-slate-900 dark:text-slate-100">What's happening here?</h3>
+  </div>
+  <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ stage.concept }}</p>
+</div>
+{% endmacro %}
+
+{# 📖 Lesson section: numbered how-to steps. #}
+{% macro how_to_steps(stage) %}
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-3">
+    <i data-lucide="list-ordered" class="w-5 h-5 text-brand-600"></i>
+    <h3 class="font-semibold text-slate-900 dark:text-slate-100">How to exploit it</h3>
+  </div>
+  <ol class="list-decimal pl-5 space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+    {% for step in stage.how_to %}<li>{{ step }}</li>{% endfor %}
+  </ol>
+</div>
+{% endmacro %}
+
+{# 📖 Lesson section: worked example with the demo answer visible + Run + Copy buttons. #}
+{% macro worked_example_block(stage, sandbox_url, csrf_token, sandbox_result=None) %}
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-2">
+    <i data-lucide="flask-conical" class="w-5 h-5 text-amber-700"></i>
+    <h3 class="font-semibold text-amber-900">Worked example (answer visible — does not count for progress)</h3>
+  </div>
+  <p class="text-sm text-amber-900 mb-3">{{ stage.worked_example.description }}</p>
+  <div class="bg-white dark:bg-slate-900 border border-amber-200 rounded p-3 text-xs mono text-amber-900 mb-3 break-all flex items-start gap-2">
+    <div class="flex-1">payload / answer:  <span class="font-bold">{{ stage.worked_example.payload }}</span></div>
+    <button type="button"
+            onclick='window.copyToClipboard({{ stage.worked_example.payload|tojson }}, "Payload")'
+            class="flex-shrink-0 text-xs px-2 py-1 rounded-md border border-amber-300 hover:bg-amber-100 text-amber-800 inline-flex items-center gap-1">
+      <i data-lucide="copy" class="w-3 h-3"></i> Copy
+    </button>
+  </div>
+  <p class="text-xs text-amber-900 mb-3">{{ stage.worked_example.explanation }}</p>
+  <form method="post" action="{{ sandbox_url }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="stage" value="{{ stage.n }}">
+    <button class="btn-pop text-sm px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium inline-flex items-center gap-1.5">
+      <i data-lucide="play" class="w-4 h-4"></i> Run worked example
+    </button>
+  </form>
+  {% if sandbox_result %}
+    <div class="mt-3 bg-slate-900 text-slate-100 rounded p-3 text-xs mono">
+      <p class="text-slate-400">// sandbox result (no progress recorded):</p>
+      <pre class="whitespace-pre-wrap">{{ sandbox_result }}</pre>
+    </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Intro-page sections ----------------------------------------------------- #}
+
+{% macro why_it_matters_card(text) %}
+<div class="bg-rose-50 border border-rose-200 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-2">
+    <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-700"></i>
+    <h3 class="font-semibold text-rose-900">Why this matters</h3>
+  </div>
+  <p class="text-sm text-rose-900 leading-relaxed">{{ text }}</p>
+</div>
+{% endmacro %}
+
+{% macro background_card(paragraphs) %}
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-3">
+    <i data-lucide="brain" class="w-5 h-5 text-brand-600"></i>
+    <h3 class="font-semibold text-slate-900 dark:text-slate-100">Background you need</h3>
+  </div>
+  <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+    {% for p in paragraphs %}<p>{{ p }}</p>{% endfor %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro outcomes_list(outcomes) %}
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-3">
+    <i data-lucide="target" class="w-5 h-5 text-brand-600"></i>
+    <h3 class="font-semibold text-slate-900 dark:text-slate-100">What you'll learn</h3>
+  </div>
+  <ul class="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+    {% for o in outcomes %}
+      <li class="flex items-start gap-2">
+        <i data-lucide="check" class="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0"></i>
+        <span>{{ o }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endmacro %}
+
+{% macro vocab_card(items) %}
+<details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 group" open>
+  <summary class="cursor-pointer list-none flex items-center justify-between gap-2">
+    <span class="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+      <i data-lucide="book-marked" class="w-5 h-5 text-brand-600"></i>
+      Key terms
+    </span>
+    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+  </summary>
+  <dl class="mt-4 space-y-2 text-sm">
+    {% for v in items %}
+      <div class="flex flex-col sm:flex-row gap-1 sm:gap-3">
+        <dt class="font-mono text-slate-900 dark:text-slate-100 sm:w-40 flex-shrink-0">{{ v.term }}</dt>
+        <dd class="text-slate-600 dark:text-slate-400">{{ v.def }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+</details>
+{% endmacro %}
+
+{% macro incidents_card(items) %}
+<details class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 group">
+  <summary class="cursor-pointer list-none flex items-center justify-between gap-2">
+    <span class="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+      <i data-lucide="newspaper" class="w-5 h-5 text-brand-600"></i>
+      Famous incidents
+    </span>
+    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+  </summary>
+  <ul class="mt-4 space-y-3 text-sm">
+    {% for i in items %}
+      <li class="flex gap-3">
+        <span class="font-mono text-slate-500 dark:text-slate-400 flex-shrink-0">{{ i.year }}</span>
+        <div>
+          <p class="font-semibold text-slate-900 dark:text-slate-100">{{ i.name }}</p>
+          <p class="text-slate-600 dark:text-slate-400">{{ i.summary }}</p>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endmacro %}
+
+{% macro prereqs_card(items) %}
+<div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+  <div class="flex items-center gap-2 mb-3">
+    <i data-lucide="clipboard-check" class="w-5 h-5 text-blue-700"></i>
+    <h3 class="font-semibold text-blue-900">Before you start</h3>
+  </div>
+  <ul class="space-y-1.5 text-sm text-blue-900">
+    {% for p in items %}
+      <li class="flex items-start gap-2">
+        <i data-lucide="dot" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+        <span>{{ p }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endmacro %}
+
+{# 🎯 Challenge section header. Wrap the per-stage form below this. #}
+{% macro challenge_section_header(stage) %}
+<div class="flex items-center gap-2 pt-2">
+  <i data-lucide="target" class="w-5 h-5 text-brand-600"></i>
+  <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Your challenge</h3>
+  <span class="text-xs text-slate-500 dark:text-slate-400">— apply the technique to a different target</span>
+</div>
+{% endmacro %}
+
+{# Smart feedback for wrong attempts. kind = "warn" / "info" / "error". #}
+{% macro wrong_feedback(message, kind="warn") %}
+{% set styles = {
+  'warn':  'bg-amber-50 border-amber-200 text-amber-900',
+  'info':  'bg-blue-50 border-blue-200 text-blue-900',
+  'error': 'bg-red-50 border-red-200 text-red-900',
+} %}
+<div class="border rounded-lg p-3 flex items-start gap-2 text-sm {{ styles.get(kind, styles['warn']) }}">
+  <i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+  <div>{{ message|safe }}</div>
+</div>
+{% endmacro %}
+
+{# Tiny inline button that prefills another input (by id) with a starter value. #}
+{% macro try_starter_button(target_id, starter, label="Try this starter") %}
+<button type="button"
+        onclick="(function(){var el=document.getElementById('{{ target_id }}');if(el){el.value={{ starter|tojson }};el.focus();}})()"
+        class="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-slate-700 dark:text-slate-300 inline-flex items-center gap-1">
+  <i data-lucide="zap" class="w-3 h-3"></i> {{ label }}
+</button>
+{% endmacro %}
+
+{# Click-to-reveal progressive hints. HTMX swaps the inner card on click — no full reload. #}
+{% macro progressive_hint(stage, revealed, reveal_url, csrf_token) %}
+<div id="hint-card-{{ stage.n }}">
+  {{ progressive_hint_inner(stage, revealed, reveal_url, csrf_token) }}
+</div>
+{% endmacro %}
+
+{% macro progressive_hint_inner(stage, revealed, reveal_url, csrf_token) %}
+<div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+  <div class="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-semibold text-sm mb-2">
+    <i data-lucide="lightbulb" class="w-4 h-4"></i>
+    Hints ({{ revealed }}/{{ stage.hints|length }} revealed)
+  </div>
+  <ol class="space-y-2 text-sm text-blue-900 dark:text-blue-100 mb-3 list-decimal pl-5">
+    {% for h in stage.hints[:revealed] %}<li>{{ h }}</li>{% endfor %}
+  </ol>
+  {% if revealed < stage.hints|length %}
+    <button class="btn-pop text-xs px-3 py-1.5 rounded-md border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-slate-800 text-blue-800 dark:text-blue-200 inline-flex items-center gap-1"
+            hx-post="{{ reveal_url }}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            hx-vals='{"stage": "{{ stage.n }}"}'
+            hx-target="#hint-card-{{ stage.n }}"
+            hx-swap="innerHTML">
+      <i data-lucide="lightbulb" class="w-3 h-3"></i> Reveal next hint
+    </button>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Per-stage success badge shown above the form after completing this stage. #}
+{% macro stage_solved_banner(next_stage_n, base_url, lesson_complete, lesson_title="this lesson") %}
+<div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4 flex items-start gap-3">
+  <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5"></i>
+  <div class="text-sm">
+    <p class="font-semibold text-emerald-900 dark:text-emerald-200">Stage solved.</p>
+    {% if lesson_complete %}
+      <p class="text-emerald-800 dark:text-emerald-300">All stages complete. <a href="{{ base_url|replace('/challenge','/complete') }}" class="underline font-medium">View completion page &rarr;</a></p>
+    {% elif next_stage_n %}
+      <p class="text-emerald-800 dark:text-emerald-300"><a href="{{ base_url }}?stage={{ next_stage_n }}" class="underline font-medium">Continue to stage {{ next_stage_n }} &rarr;</a></p>
+    {% endif %}
+  </div>
+</div>
+{# Inline script: only fires the celebration modal + confetti when the WHOLE lesson is done.
+   Per-stage feedback is handled by the green banner above — no duplicate toast. #}
+{% if lesson_complete %}
+<script>
+  (function () {
+    var fire = function () {
+      document.dispatchEvent(new CustomEvent('celebrate', {
+        detail: {
+          title: 'You finished {{ lesson_title|e }}!',
+          message: 'Every stage in this lesson is now complete.',
+          continueUrl: {{ (base_url|replace('/challenge','/complete'))|tojson }}
+        }
+      }));
+    };
+    if (document.readyState === 'complete') fire();
+    else window.addEventListener('load', fire);
+  })();
+</script>
+{% endif %}
+{% endmacro %}
+
+{# Convenience macro: render the full Lesson section (concept + how-to + worked example) #}
+{% macro lesson_section(stage, sandbox_url, csrf_token, sandbox_result=None) %}
+<div class="space-y-4">
+  <div class="flex items-center gap-2">
+    <i data-lucide="book-open" class="w-5 h-5 text-brand-600"></i>
+    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Lesson</h3>
+    <span class="text-xs text-slate-500 dark:text-slate-400">— learn the technique first</span>
+  </div>
+  {{ concept_card(stage) }}
+  {{ how_to_steps(stage) }}
+  {{ worked_example_block(stage, sandbox_url, csrf_token, sandbox_result) }}
 </div>
 {% endmacro %}

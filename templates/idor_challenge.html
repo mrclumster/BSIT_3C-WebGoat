@@ -1,32 +1,160 @@
 {% extends "base.html" %}
-{% from "_lesson_macros.html" import lesson_header %}
-{% block title %}IDOR Challenge{% endblock %}
+{% from "_lesson_macros.html" import lesson_header, stepper, stage_objective, lesson_section, challenge_section_header, progressive_hint, stage_solved_banner, wrong_feedback, try_starter_button %}
+{% block title %}Challenge: {{ lesson.title }}{% endblock %}
 {% block content %}
-<div class="space-y-6">
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-    {{ lesson_header("user-x", "Challenge: View someone else's profile", "You are 'logged in' as profile #" ~ owner_id, completed) }}
-  </div>
+<div class="grid grid-cols-1 lg:grid-cols-[14rem_1fr] gap-6">
+  {{ stepper(lesson, stage.n, completed_set, url_for('lesson_idor_challenge')) }}
 
-  <div class="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
-    <h2 class="text-sm font-bold uppercase tracking-wider text-red-700 mb-3">Vulnerable endpoint</h2>
-    <p class="text-sm text-slate-700 mb-3">
-      <code class="mono bg-slate-100 px-1.5 py-0.5 rounded">GET /lesson/idor/profile/&lt;id&gt;</code> &mdash; no authorization check.
-      Click below to view a profile, or change the ID directly in the URL bar.
-    </p>
-    <div class="flex flex-wrap gap-2">
-      {% for pid in profiles.keys() %}
-        <a href="{{ url_for('lesson_idor_view', profile_id=pid) }}"
-           class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm
-           {% if pid == owner_id %}border-slate-300 text-slate-700 hover:bg-slate-50{% else %}border-red-300 text-red-700 hover:bg-red-50{% endif %}">
-          <i data-lucide="user" class="w-4 h-4"></i>
-          Profile #{{ pid }}{% if pid == owner_id %} (you){% endif %}
-        </a>
-      {% endfor %}
+  <div class="space-y-6">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+      {{ lesson_header(lesson.icon, lesson.title, "Stage " ~ stage.n ~ " of " ~ lesson.stages|length, lesson_complete) }}
+      {{ stage_objective(stage) }}
+      <p class="text-xs text-slate-500 dark:text-slate-400">You are logged in as profile #{{ owner_id }} (Alice). The victim is profile #{{ victim_id }} (Bob), account 102.</p>
     </div>
-  </div>
 
-  <p class="text-sm">
-    <a href="{{ url_for('lesson_idor_intro') }}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to lesson intro</a>
-  </p>
+    {{ lesson_section(stage, url_for('lesson_idor_sandbox'), csrf_token(), sandbox_result) }}
+
+    {% if just_solved %}
+      {{ stage_solved_banner(next_stage_n, url_for('lesson_idor_challenge'), lesson_complete, lesson.title) }}
+    {% endif %}
+
+    <div class="space-y-4">
+      {{ challenge_section_header(stage) }}
+
+      {% if stage.n == 1 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-3">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Open profile <strong>#3</strong> (Charlie). The route at <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono text-xs">/lesson/access-control/profile/&lt;id&gt;</code> has no ownership check.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+          <div class="flex flex-wrap gap-2">
+            {% for pid, p in profiles.items() %}
+              <a href="{{ url_for('lesson_idor_view', profile_id=pid) }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-sm">
+                <span class="mono text-xs text-slate-500 dark:text-slate-400">#{{ pid }}</span> {{ p.name }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+      {% elif stage.n == 2 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Your account is below. The <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">acct</code> URL parameter is base64. Read the victim's transactions and submit one of their transaction IDs.</p>
+          <div class="bg-slate-100 dark:bg-slate-800 rounded p-3 text-xs mono">
+            your acct (101) encoded: <span class="text-amber-700">{{ my_encoded }}</span><br>
+            link: <a class="text-brand-600 underline" href="{{ url_for('lesson_idor_tx') }}?acct={{ my_encoded }}">/lesson/access-control/tx?acct={{ my_encoded }}</a>
+          </div>
+
+          <form method="get" action="{{ url_for('lesson_idor_tx') }}" class="flex gap-2">
+            <input id="s2_acct" name="acct" value="{{ form.acct|default(my_encoded) }}" class="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">Open</button>
+          </form>
+
+          {% if tx_listing is defined and tx_listing %}
+            <table class="w-full text-sm border border-slate-200 dark:border-slate-700 rounded overflow-hidden">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-left"><tr><th class="px-3 py-2">id</th><th class="px-3 py-2">memo</th><th class="px-3 py-2">amount</th></tr></thead>
+              <tbody>
+                {% for t in tx_listing %}<tr class="border-t border-slate-200 dark:border-slate-700"><td class="px-3 py-2 mono">{{ t.id }}</td><td class="px-3 py-2">{{ t.memo }}</td><td class="px-3 py-2 mono">{{ t.amount }}</td></tr>{% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="2">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">Submit a transaction ID belonging to the victim</label>
+            <input name="tx_id" placeholder="T-...." class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+
+      {% elif stage.n == 3 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Tamper the hidden <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">from_account</code> field and drain the victim's account.</p>
+          <div class="bg-slate-100 dark:bg-slate-800 rounded p-3 text-xs mono space-y-1">
+            {% for a in accounts.values() %}
+              <p>acct {{ a.acct_id }} (owner #{{ a.owner_id }}): balance {{ "%.2f"|format(a.balance) }} | encoded: {{ encode_acct(a.acct_id) }}</p>
+            {% endfor %}
+          </div>
+
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="3">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">from_account (hidden in real form — editable here)</label>
+            <input name="from_account" value="{{ form.from_account|default(my_encoded) }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">to_account</label>
+            <input name="to_account" value="{{ form.to_account|default(my_encoded) }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">amount</label>
+            <input name="amount" type="number" step="0.01" value="{{ form.amount|default('0') }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">Transfer</button>
+          </form>
+
+          {% if transfer_result %}
+            <div class="bg-slate-900 text-slate-100 rounded p-3 text-xs mono">
+              {% if transfer_result.ok %}
+                <p class="text-emerald-300">// transfer ok: {{ transfer_result.src.acct_id }} -> {{ transfer_result.dst.acct_id }}</p>
+                <p>src balance now: {{ "%.2f"|format(transfer_result.src.balance) }}</p>
+                <p>dst balance now: {{ "%.2f"|format(transfer_result.dst.balance) }}</p>
+              {% else %}<p class="text-red-400">// failed: {{ transfer_result.reason }}</p>{% endif %}
+            </div>
+          {% endif %}
+
+          <form method="post" class="border-t border-slate-200 dark:border-slate-700 pt-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="3">
+            <input type="hidden" name="action" value="reset">
+            <button class="text-xs px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-slate-700 dark:text-slate-300">Reset balances</button>
+          </form>
+        </div>
+
+      {% elif stage.n == 4 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Promote yourself to admin via mass-assignment. Add a <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">role</code> field, save, then submit the flag from the admin panel.</p>
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="4">
+            <input type="hidden" name="action" value="update">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">Display name</label>
+            <input name="name" value="{{ my_profile.name }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">Email</label>
+            <input name="email" value="{{ my_profile.email }}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm">
+            <details class="text-xs" open>
+              <summary class="cursor-pointer text-slate-500 dark:text-slate-400">extra fields (mass-assignment)</summary>
+              <input name="role" value="{{ form.role|default('user') }}" class="mt-2 w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm">
+              <p class="text-slate-500 dark:text-slate-400 mt-1">try role=admin</p>
+            </details>
+            <button class="btn-pop px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">Save profile</button>
+          </form>
+
+          <div class="bg-slate-100 dark:bg-slate-800 rounded p-3 text-xs mono">
+            your profile: {{ my_profile }}
+          </div>
+
+          {% if my_profile.role == 'admin' %}
+            <div class="bg-amber-50 border border-amber-200 rounded p-3 text-sm">
+              <p class="font-semibold text-amber-900">Admin panel unlocked</p>
+              <p class="text-amber-800">flag: <code class="mono">{{ admin_flag }}</code></p>
+            </div>
+          {% endif %}
+
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="4">
+            <input type="hidden" name="action" value="submit_flag">
+            <input name="flag" placeholder="FLAG{...}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit flag</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    {{ progressive_hint(stage, hints_revealed, url_for('lesson_idor_hint'), csrf_token()) }}
+  </div>
 </div>
 {% endblock %}

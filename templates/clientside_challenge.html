@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, stepper, stage_objective, lesson_section, challenge_section_header, progressive_hint, stage_solved_banner, wrong_feedback %}
+{% block title %}Challenge: {{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-[14rem_1fr] gap-6">
+  {{ stepper(lesson, stage.n, completed_set, url_for('lesson_clientside_challenge')) }}
+
+  <div class="space-y-6">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+      {{ lesson_header(lesson.icon, lesson.title, "Stage " ~ stage.n ~ " of " ~ lesson.stages|length, lesson_complete) }}
+      {{ stage_objective(stage) }}
+    </div>
+
+    {{ lesson_section(stage, url_for('lesson_clientside_sandbox'), csrf_token(), sandbox_result) }}
+
+    {% if just_solved %}
+      {{ stage_solved_banner(next_stage_n, url_for('lesson_clientside_challenge'), lesson_complete, lesson.title) }}
+    {% endif %}
+
+    <div class="space-y-4">
+      {{ challenge_section_header(stage) }}
+
+      {% if stage.n == 1 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">A premium item is for sale at <strong>${{ "%.2f"|format(challenge_price) }}</strong>. The form's hidden <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">price</code> field is what the server reads. Lower it and submit.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <div class="bg-slate-100 dark:bg-slate-800 rounded p-4 text-sm">
+            <p class="font-semibold">Premium Sticker Pack</p>
+            <p class="text-slate-700 dark:text-slate-300">Price: <strong>${{ "%.2f"|format(challenge_price) }}</strong></p>
+          </div>
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="1">
+            <input type="hidden" name="price" value="{{ challenge_price }}">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">Buy</button>
+          </form>
+
+          {% if buy_result %}
+            <div class="bg-slate-900 text-slate-100 rounded p-3 text-xs mono">
+              // server received price: ${{ "%.2f"|format(buy_result.price) }}<br>
+              {% if buy_result.ok %}<span class="text-emerald-300">// purchase accepted at submitted price</span>
+              {% else %}<span class="text-amber-300">// purchase recorded, but price too high to count</span>{% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+      {% elif stage.n == 2 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">The page set two cookies on your browser: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">role=guest</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">theme=light</code>. Edit the <code>role</code> cookie to <code>admin</code> in F12 → Application → Cookies, then click "Check role".</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Server currently sees: role=<code class="mono">{{ current_role }}</code>, theme=<code class="mono">{{ current_theme }}</code></p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="2">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">Check role</button>
+          </form>
+
+          {% if cookie_result %}
+            <div class="bg-slate-900 text-slate-100 rounded p-3 text-xs mono">
+              // server saw role={{ cookie_result.role }}<br>
+              {% if cookie_result.is_admin %}<span class="text-emerald-300">// admin flag: {{ cookie_result.flag }}</span>
+              {% else %}<span class="text-amber-300">// not admin yet</span>{% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+      {% elif stage.n == 3 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">A session blob is stored in localStorage under the key <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">session</code>. It's base64 of <code>{"user":"you","is_admin":false}</code>. Decode it in the Console, flip <code>is_admin</code>, re-encode, and paste the new value below.</p>
+          <script>
+            (function(){
+              try {
+                if (!localStorage.getItem('session')) localStorage.setItem('session', "{{ session_ls_value }}");
+                if (!localStorage.getItem('demo'))    localStorage.setItem('demo',    "{{ demo_ls_value }}");
+              } catch(e){}
+            })();
+          </script>
+          <pre class="bg-slate-100 dark:bg-slate-800 rounded p-2 text-xs mono">localStorage.session  =  {{ session_ls_value }}</pre>
+
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="3">
+            <label class="text-xs font-medium text-slate-600 dark:text-slate-400">Modified base64-encoded session</label>
+            <input id="cs3_session" name="session_b64" placeholder="btoa(JSON.stringify({user:'you', is_admin:true}))" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-xs" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit session</button>
+            <button type="button"
+                    onclick="(function(){var v=localStorage.getItem('session'); if(v){document.getElementById('cs3_session').value=v;}})()"
+                    class="text-xs px-2 py-1 rounded-md border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950">Pull from localStorage</button>
+          </form>
+        </div>
+
+      {% elif stage.n == 4 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">The "Claim flag" button is disabled. Re-enable it via Inspect Element (delete the <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">disabled</code> attribute) and click it.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="4">
+            <input type="hidden" name="action" value="reset">
+            <button id="reset" disabled class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-sm">Reset (worked example)</button>
+          </form>
+
+          {% if reset_acked %}
+            <div class="bg-amber-50 border border-amber-200 rounded p-2 text-xs text-amber-900">// reset acknowledged — worked example bypassed</div>
+          {% endif %}
+
+          <form method="post" class="flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="4">
+            <input type="hidden" name="action" value="claim">
+            <button id="claim" disabled class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">Claim flag</button>
+          </form>
+
+          {% if claim_acked %}
+            <div class="bg-emerald-50 border border-emerald-200 rounded p-2 text-xs text-emerald-900">// flag claimed — disabled is a UI hint, not a server check</div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    {{ progressive_hint(stage, hints_revealed, url_for('lesson_clientside_hint'), csrf_token()) }}
+  </div>
+</div>
+{% endblock %}

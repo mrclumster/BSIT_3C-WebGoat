@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "_lesson_macros.html" import lesson_header, stepper, stage_objective, lesson_section, challenge_section_header, progressive_hint, stage_solved_banner, wrong_feedback %}
+{% block title %}Challenge: {{ lesson.title }}{% endblock %}
+{% block content %}
+<!-- DEMO_FLAG_VS: {{ demo_vs }} -->
+<!-- FLAG_VS: {{ real_vs }} -->
+<div class="grid grid-cols-1 lg:grid-cols-[14rem_1fr] gap-6">
+  {{ stepper(lesson, stage.n, completed_set, url_for('lesson_devtools_challenge')) }}
+
+  <div class="space-y-6">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+      {{ lesson_header(lesson.icon, lesson.title, "Stage " ~ stage.n ~ " of " ~ lesson.stages|length, lesson_complete) }}
+      {{ stage_objective(stage) }}
+    </div>
+
+    {{ lesson_section(stage, url_for('lesson_devtools_sandbox'), csrf_token(), sandbox_result) }}
+
+    {% if just_solved %}
+      {{ stage_solved_banner(next_stage_n, url_for('lesson_devtools_challenge'), lesson_complete, lesson.title) }}
+    {% endif %}
+
+    <div class="space-y-4">
+      {{ challenge_section_header(stage) }}
+
+      {% if stage.n == 1 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">There's a flag in this page's HTML source — but not in the rendered text. Press <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-xs">Ctrl+U</kbd> to view the source, then search for <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">FLAG_VS:</code>. Two flags exist; submit the one whose name does <em>not</em> say <code>DEMO</code>.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="1">
+            <input name="answer" placeholder="flag value" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+
+      {% elif stage.n == 2 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">There's a hidden input in this very form. The page never displays its value. Use Inspect Element to read it.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="2">
+            <input type="hidden" name="demo_secret" value="{{ demo_inspect }}">
+            <input type="hidden" name="flag_input" value="{{ real_inspect }}">
+            <input name="answer" placeholder="value of name=&quot;flag_input&quot;" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+
+      {% elif stage.n == 3 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Two base64-encoded strings are exposed as JS globals on this page: <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">window.demoEncoded</code> and <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">window.flagEncoded</code>. Open the Console and decode <code>window.flagEncoded</code> with <code>atob()</code>.</p>
+          <script>
+            window.demoEncoded = "{{ demo_console_b64 }}";
+            window.flagEncoded = "{{ real_console_b64 }}";
+          </script>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <form method="post" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="3">
+            <input name="answer" placeholder="atob(window.flagEncoded)" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+
+      {% elif stage.n == 4 %}
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <p class="text-sm text-slate-600 dark:text-slate-400">Open the Network tab, then click "Fetch real flag". Inspect the response headers for <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded mono">X-Flag</code>.</p>
+          {% if feedback %}{{ wrong_feedback(feedback) }}{% endif %}
+
+          <div class="flex flex-wrap gap-2">
+            <button id="net_demo" type="button" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-950 text-sm">Fetch demo</button>
+            <button id="net_real" type="button" class="px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm">Fetch real flag</button>
+            <span id="net_status" class="text-xs text-slate-500 dark:text-slate-400 self-center"></span>
+          </div>
+          <script>
+            (function(){
+              function attach(id, url) {
+                var b = document.getElementById(id);
+                if (!b) return;
+                b.addEventListener('click', function(){
+                  fetch(url).then(function(r){
+                    document.getElementById('net_status').textContent =
+                      'fetched ' + url + ' — open Network tab for headers';
+                  });
+                });
+              }
+              attach('net_demo', "{{ url_for('lesson_devtools_network', kind='demo') }}");
+              attach('net_real', "{{ url_for('lesson_devtools_network', kind='real') }}");
+            })();
+          </script>
+
+          <form method="post" class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="stage" value="4">
+            <input name="answer" placeholder="value of X-Flag header" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg mono text-sm" autocomplete="off">
+            <button class="btn-pop px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium">Submit</button>
+            {% if submit_msg %}<p class="text-sm {% if submit_ok %}text-emerald-700{% else %}text-red-700{% endif %}">{{ submit_msg }}</p>{% endif %}
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    {{ progressive_hint(stage, hints_revealed, url_for('lesson_devtools_hint'), csrf_token()) }}
+  </div>
+</div>
+{% endblock %}
