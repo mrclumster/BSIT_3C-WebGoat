@@ -310,38 +310,34 @@
 </div>
 {% endmacro %}
 
-{# Per-stage success badge shown above the form after completing this stage. #}
+{# Stage solved → toast notification (and celebration modal on full lesson done).
+   No inline banner — the toast is the primary, scroll-position-independent feedback. #}
 {% macro stage_solved_banner(next_stage_n, base_url, lesson_complete, lesson_title="this lesson") %}
-<div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4 flex items-start gap-3">
-  <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5"></i>
-  <div class="text-sm">
-    <p class="font-semibold text-emerald-900 dark:text-emerald-200">Stage solved.</p>
-    {% if lesson_complete %}
-      <p class="text-emerald-800 dark:text-emerald-300">All stages complete. <a href="{{ base_url|replace('/challenge','/complete') }}" class="underline font-medium">View completion page &rarr;</a></p>
-    {% elif next_stage_n %}
-      <p class="text-emerald-800 dark:text-emerald-300"><a href="{{ base_url }}?stage={{ next_stage_n }}" class="underline font-medium">Continue to stage {{ next_stage_n }} &rarr;</a></p>
-    {% endif %}
-  </div>
-</div>
-{# Inline script: only fires the celebration modal + confetti when the WHOLE lesson is done.
-   Per-stage feedback is handled by the green banner above — no duplicate toast. #}
-{% if lesson_complete %}
 <script>
   (function () {
     var fire = function () {
-      document.dispatchEvent(new CustomEvent('celebrate', {
-        detail: {
-          title: 'You finished {{ lesson_title|e }}!',
-          message: 'Every stage in this lesson is now complete.',
-          continueUrl: {{ (base_url|replace('/challenge','/complete'))|tojson }}
-        }
-      }));
+      {% if lesson_complete %}
+        document.dispatchEvent(new CustomEvent('celebrate', {
+          detail: {
+            title: 'You finished {{ lesson_title|e }}!',
+            message: 'Every stage in this lesson is now complete.',
+            continueUrl: {{ (base_url|replace('/challenge','/complete'))|tojson }}
+          }
+        }));
+      {% else %}
+        document.dispatchEvent(new CustomEvent('toast', {
+          detail: {
+            message: {% if next_stage_n %}'Stage solved! Stage {{ next_stage_n }} unlocked.'{% else %}'Stage solved!'{% endif %},
+            kind: 'success',
+            ttl: 4500
+          }
+        }));
+      {% endif %}
     };
     if (document.readyState === 'complete') fire();
     else window.addEventListener('load', fire);
   })();
 </script>
-{% endif %}
 {% endmacro %}
 
 {# Convenience macro: render the full Lesson section (concept + how-to + worked example) #}
